@@ -12,7 +12,7 @@ export const DeleteCommand= new Command(
         ),
     async function execute(interaction: ChatInputCommandInteraction) {
         const channel = interaction.channel;
-        const messageId = interaction.options.getString("message-id");
+        const messageId = interaction.options.getString("id");
         const message = await channel.messages.fetch(messageId);
 
         if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ViewAuditLog)) {
@@ -21,6 +21,7 @@ export const DeleteCommand= new Command(
         }
 
         if (!message || !message.deletable) {
+            console.log(message);
             await interaction.reply({content: "This message ID is invalid", ephemeral: true})
             return;
         }

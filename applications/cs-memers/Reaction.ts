@@ -8,4 +8,9 @@ export class Reaction {
         this.channelId = channelId;
         this.time = time;
     }
+
+    public static fromObject(object) {
+        const {messageId, channelId, time} = object;
+        return new Reaction(messageId, channelId, time);
+    }
 }

@@ -1,8 +1,8 @@
 import {RedditEmbed} from "./embeds/Reddit.Embed";
 import {TextBasedChannel} from "discord.js";
-import * as fs from "fs";
 import {CSMemers} from "./cs-memers";
 import * as config from "./config.json";
+import * as fs from "fs";
 
 export class Reddit {
 
@@ -59,6 +59,7 @@ export class Reddit {
     }
 }
 
+
 class Entry {
     public id: string;
     public title: string;
@@ -76,5 +77,30 @@ class Entry {
         this.score = data["score"];
         this.body = data["body"];
         this.images = data["previews"];
+    }
+}
+
+class NewEntry {
+    public id: string;
+    public title: string;
+    public link: string;
+    public date: Date;
+    public score: number;
+    public body: string;
+    public images: string[];
+
+    constructor(id: string, title: string, link: string, date: Date, score: number, body: string, images: string[]) {
+        this.id = id;
+        this.title = title;
+        this.link = link;
+        this.date = date;
+        this.score = score;
+        this.body = body;
+        this.images = images;
+    }
+
+    public static fromObject(object: any): NewEntry {
+        const { id, title, link, date, score, body, images } = object;
+        return new NewEntry(id, title, link, new Date(date), score, body, images);
     }
 }

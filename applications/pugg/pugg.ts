@@ -5,7 +5,6 @@ import {Request, Response} from "express";
 import {
     ButtonInteraction,
     CategoryChannel,
-    ChatInputCommandInteraction,
     Events,
     GuildMember,
     Interaction,
@@ -13,7 +12,6 @@ import {
     ModalSubmitInteraction, SelectMenuInteraction, TextBasedChannel,
 } from "discord.js";
 import {Verifier} from "../../Verifier";
-import {GlobalCommand} from "../../Command";
 import {PuggApp} from "./PuggApp";
 import {Student} from "../../Student";
 import {Ticket} from "../../Ticket";
@@ -33,15 +31,15 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     const user = interaction.user;
     const student = await Student.fetch(user.id);
 
-    if (interaction instanceof ChatInputCommandInteraction) {
+    if (interaction.isChatInputCommand()) {
         const command = Pugg.commands.get(interaction.commandName);
 
         try {
-            if (command instanceof GlobalCommand) command.execute(interaction, Pugg);
-            else command.execute(interaction);
+            command.execute(interaction, Pugg).catch();
         } catch (error) {
             Pugg.logger.error(`Command by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
 
@@ -121,14 +119,8 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
                 return;
             }
 
-            const student = new Student(user.id, user.username, email, false);
-            const hash = Verifier.encrypt(user.id + "-" + Date.now());
-            const token = hash.iv + "-" + hash.content;
-            const url = `https://www.technowizzy.dev/api/v1/students/verify/${token}`;
-            Verifier.insert(student.id, interaction);
-            Verifier.sendEmail(email, url);
+            Verifier.registerNewStudent(user, email, interaction);
             interaction.reply({content: `A Verification Email has been sent to \`${email}\`.`, ephemeral: true}).catch();
-            student.save().catch();
             return;
 
         } catch (error) {

@@ -3,13 +3,11 @@ import * as config from "./config.json";
 import {
     AttachmentBuilder,
     ButtonInteraction,
-    ChatInputCommandInteraction,
     Events,
     Interaction,
     ModalSubmitInteraction,
     TextBasedChannel
 } from "discord.js";
-import {GlobalCommand} from "../../Command";
 import {WallyballApp} from "./WallyballApp";
 import {Database} from "../../Database";
 import {LeaderboardRow} from "../../components/Leaderboard.Row";
@@ -31,15 +29,15 @@ Wallyball.client.login(config.token).then(() => {
 Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     const user = interaction.user;
 
-    if (interaction instanceof ChatInputCommandInteraction) {
+    if (interaction.isChatInputCommand()) {
         const command = Wallyball.commands.get(interaction.commandName);
 
         try {
-            if (command instanceof GlobalCommand) command.execute(interaction, Wallyball);
-            else command.execute(interaction);
+            command.execute(interaction, Wallyball).catch();
         } catch (error) {
             Wallyball.logger.error(`Command by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
 

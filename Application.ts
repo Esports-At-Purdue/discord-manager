@@ -9,7 +9,7 @@ import {
     REST, Routes,
     TextBasedChannel
 } from "discord.js";
-import {Command} from "./Command";
+import {Command, GlobalCommand} from "./Command";
 import * as fs from "fs";
 import {Database} from "./Database";
 import {Verifier} from "./Verifier";
@@ -40,6 +40,8 @@ export class Application {
     public constructor(name: string) {
         this.name = name;
         this.client = new Client(options);
+        this.commands = new CommandRegister();
+        for (const globalCommand of CommandRegister.GlobalCommands) this.commands.registerCommand(globalCommand);
     }
 
     public async load(token: string, guildId: string, logChannelId: string) {
@@ -52,19 +54,28 @@ export class Application {
     }
 
     private async registerCommands(token: string) {
-        const rest = new REST({version: "9"}).setToken(token);
-        const guildCommands = [];
-        const globalCommands = [];
+        const rest = new REST({ version: "9" }).setToken(token);
 
-        for (const command of this.commands) guildCommands.push(command[1].builder.toJSON());
-        for (const command of CommandRegister.GlobalCommandRegister) {
-            this.commands.set(command[0], command[1]);
-            guildCommands.push(command[1].builder.toJSON());
+        const guildCommandsJSONBody = Array.from(this.commands.values())
+            .filter(command => !(command instanceof GlobalCommand))
+            .map(command => command.builder.toJSON())
+
+        const globalCommandsJSONBody = Array.from(this.commands.values())
+            .filter(command => command instanceof GlobalCommand)
+            .map(command => command.builder.toJSON())
+
+        try {
+            await rest.put(
+                Routes.applicationGuildCommands(this.client.application.id, this.guild.id),
+                { body: guildCommandsJSONBody }
+            );
+            await rest.put(Routes.applicationCommands(this.client.application.id),
+                { body: globalCommandsJSONBody }
+            );
+            this.logger.info("Application Commands Uploaded");
+        } catch (error) {
+            this.logger.error("Failed to register commands:", error);
         }
-
-        await rest.put(Routes.applicationGuildCommands(this.client.application.id, this.guild.id), {body: guildCommands});
-        await rest.put(Routes.applicationCommands(this.client.application.id), {body: globalCommands});
-        this.logger.info("Application Commands Uploaded");
     }
 
     public ensureDataFilesExist(requiredFiles: {name: string, default: object}[]) {
@@ -79,6 +90,7 @@ export class Application {
         this.client.user.setActivity({name: name, type: type});
     }
 }
+
 function fileExists(path) {
     try {
         fs.accessSync(path);

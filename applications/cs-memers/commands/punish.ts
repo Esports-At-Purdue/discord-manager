@@ -1,8 +1,9 @@
-import {ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder, time} from "discord.js";
+import {ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder} from "discord.js";
 import {Command} from "../../../Command";
 import {CSMemers} from "../cs-memers";
 
-export const PunishCommand = new Command(new SlashCommandBuilder()
+export const PunishCommand = new Command(
+    new SlashCommandBuilder()
         .setName("punish")
         .setDescription("A command to punish a user")
         .addUserOption((user) => user
@@ -20,12 +21,14 @@ export const PunishCommand = new Command(new SlashCommandBuilder()
             .setDescription("The unit of time")
             .setRequired(true)
             .setChoices(
+                {name: "seconds", value: "second"},
                 {name: "minutes", value: "minute"},
                 {name: "hours", value: "hour"},
                 {name: "days", value: "day"},
                 {name: "weeks", value: "week"},
             )
-        ), async function execute(interaction: ChatInputCommandInteraction) {
+        ),
+    async function execute(interaction: ChatInputCommandInteraction) {
         if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ViewAuditLog)) {
             await interaction.reply({content: `You are not permitted to use this command.`, ephemeral: true});
             return;
@@ -34,24 +37,29 @@ export const PunishCommand = new Command(new SlashCommandBuilder()
         const member = await CSMemers.guild.members.fetch(interaction.options.getUser("target").id);
         const magnitude = interaction.options.getInteger("length");
         const unit = interaction.options.getString("unit");
-        let milliseconds = 0;
+        const milliseconds = magnitude * (unitToMilliseconds[unit] || 0);
 
-        if (unit == "minute") milliseconds += magnitude * 60000;
-        if (unit == "hour") milliseconds += magnitude * 3600000;
-        if (unit == "day") milliseconds += magnitude * 86400000;
-        if (unit == "week") milliseconds += magnitude * 604800000;
-
-        const maxOffset = 2419200000;
-
-        if (milliseconds >= maxOffset) {
+        if (milliseconds >= MAX_TIMEOUT) {
             await interaction.reply({content: `I'm sorry, the maximum timeout is 28 days.`, ephemeral: true});
             return;
         }
 
-        const unixDate = Math.floor(Date.now() + milliseconds);
-        member.timeout(milliseconds, "Spam Detect").catch();
+        const unixDateMilliseconds = Math.floor(Date.now() + milliseconds);
+        const unixDateSeconds = Math.floor(unixDateMilliseconds / 1000);
+        member.timeout(milliseconds, "Spam Detected").catch();
         interaction.reply({
-            content: `Member **${member.nickname}**'s punishment will expire <t:${unixDate}:R>`,
+            content: `Member **${member.user.username}**'s punishment will expire <t:${unixDateSeconds}:R>`,
             ephemeral: true
         }).catch();
-    });
+    }
+);
+
+const unitToMilliseconds: Record<string, number> = {
+    second: 1000,
+    minute: 60000,
+    hour: 3600000,
+    day: 86400000,
+    week: 604800000,
+};
+
+const MAX_TIMEOUT = 28 * 24 * 60 * 60 * 1000; // 28 days in milliseconds

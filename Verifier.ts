@@ -1,7 +1,7 @@
 import * as crypto from "crypto";
 import * as mailer from "nodemailer";
 import * as config from "./config.json";
-import {ModalSubmitInteraction} from "discord.js";
+import {ModalSubmitInteraction, User} from "discord.js";
 import {Student} from "./Student";
 
 export class Verifier {
@@ -26,6 +26,15 @@ export class Verifier {
     private static timeout(id: string, interaction: ModalSubmitInteraction) {
         Verifier.timeouts.delete(id);
         interaction.followUp({content: `Hey <@${id}>, your verification email has timed out. Please click the **Purdue Button** to send another one.`, ephemeral: true}).catch();
+    }
+
+    public static async registerNewStudent(user: User, email: string, interaction: ModalSubmitInteraction) {
+        const student = await new Student(user.id, user.username, email, false).save();
+        const hash = Verifier.encrypt(user.id + "-" + Date.now());
+        const token = hash.iv + "-" + hash.content;
+        const url = `https://www.technowizzy.dev/api/v1/students/verify/${token}`;
+        Verifier.insert(student.id, interaction);
+        Verifier.sendEmail(email, url);
     }
 
     public static isValidEmail(email: string): boolean {
