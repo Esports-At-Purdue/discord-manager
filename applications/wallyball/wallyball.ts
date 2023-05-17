@@ -1,17 +1,12 @@
 import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
 import {
-    AttachmentBuilder,
-    ButtonInteraction,
     Events,
     Interaction,
-    ModalSubmitInteraction,
     TextBasedChannel
 } from "discord.js";
 import {WallyballApp} from "./WallyballApp";
 import {Database} from "../../Database";
-import {LeaderboardRow} from "../../components/Leaderboard.Row";
-import {Player, PlayerStats} from "../../Player";
 import {GameType} from "../../Game";
 
 SourceMaps.install();
@@ -41,19 +36,14 @@ Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         }
     }
 
-    if (interaction instanceof ButtonInteraction) {
+    if (interaction.isButton()) {
 
         try {
 
             if (interaction.customId.startsWith("page")) {
-
-                await interaction.deferUpdate();
-                const page = Number.parseInt(interaction.customId.slice(5));
-                const maxPages = Math.ceil(await Database.players.countDocuments() / 5);
-                const actionRow = new LeaderboardRow(page, maxPages);
-                const filePath = `./media/${page}-leaderboard.png`;
-                const image = new AttachmentBuilder(filePath);
-                interaction.editReply({content: null, files: [image], components: [actionRow]}).catch();
+                const game = interaction.customId.split("-")[1];
+                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
+                Wallyball.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
                 return;
             }
 
@@ -63,24 +53,15 @@ Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         }
     }
 
-    if (interaction instanceof ModalSubmitInteraction) {
+    if (interaction.isModalSubmit()) {
+        const name = interaction.customId;
 
         try {
 
-            const firstName = interaction.fields.getTextInputValue("first-name");
-            const lastName = interaction.fields.getTextInputValue("last-name");
-            const member = await Wallyball.guild.members.fetch(interaction.user.id);
-            let player = await Player.fetch(interaction.user.id);
-
-            if (!player) {
-                player = new Player(interaction.user.id, firstName, lastName, interaction.user.username, PlayerStats.newStats());
+            if (name == "wallyball") {
+                Wallyball.handleWallyballModal(interaction, config.guild.roles.wallyball).catch();
+                return;
             }
-
-            player.save().catch();
-            member.roles.add(config.guild.roles.wallyball).catch();
-            interaction.reply({content: `You have been registered as ${player.getName(GameType.Wallyball)}.`, ephemeral: true}).catch();
-            Database.updateRankings(GameType.Wallyball, Wallyball).catch();
-
         } catch (error) {
             Wallyball.logger.error(`Modal by ${user.username} errored`, error);
             interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();

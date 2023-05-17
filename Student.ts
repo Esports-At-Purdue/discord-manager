@@ -17,8 +17,8 @@ export class Student implements Saveable {
 
     public static fromObject(object): Student {
         if (!object) return null;
-        const { id, name, email, verified } = object;
-        return new Student(id, name, email, verified);
+        const { id, username, email, verified } = object;
+        return new Student(id, username, email, verified);
     }
 
     public async save() {

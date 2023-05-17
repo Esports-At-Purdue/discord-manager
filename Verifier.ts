@@ -17,9 +17,11 @@ export class Verifier {
         });
     }
 
-    public static remove(id: string) {
+    public static remove(id: string): Timeout {
         const entry = Verifier.timeouts.get(id);
-        Verifier.remove(id);
+        if (!entry) return null;
+        Verifier.timeouts.delete(id);
+        clearTimeout(entry.timeout);
         return entry;
     }
 
@@ -77,6 +79,13 @@ export class Verifier {
 
         return {iv: iv.toString("hex"), content: encrypted.toString("hex")};
     }
+
+    public static decrypt(hash: {iv: string, content: string}) {
+        const decipher = crypto.createDecipheriv("aes-256-ctr", config.key, Buffer.from(hash.iv, 'hex'));
+
+        const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+
+        return decrypted.toString();}
 }
 
 class Timeout {

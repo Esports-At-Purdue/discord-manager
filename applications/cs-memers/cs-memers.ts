@@ -11,10 +11,10 @@ import {
    TextChannel,
    User
 } from "discord.js";
-import {Verifier} from "../../Verifier";
 import * as fs from "fs";
 import {Reaction} from "./Reaction";
 import {Reddit} from "./Reddit";
+import {Router} from "../../Router";
 
 SourceMaps.install();
 
@@ -94,16 +94,7 @@ CSMemers.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
       try {
 
          if (name == "purdue") {
-            const email = interaction.fields.getTextInputValue("email");
-
-            if (!Verifier.isValidEmail(email)) {
-               interaction.reply({content: `Sorry, address you provided, \`${email}\`, is invalid. Please provide a valid Purdue address.`, ephemeral: true}).catch();
-               return;
-            }
-
-            Verifier.registerNewStudent(user, email, interaction).catch();
-            interaction.reply({content: `A Verification Email has been sent to \`${email}\`.`, ephemeral: true}).catch();
-            return;
+            CSMemers.handlePurdueModal(user, interaction).catch();
          }
       } catch (error) {
          CSMemers.logger.error(`Modal by ${user.username} errored`, error);
@@ -205,17 +196,8 @@ function reddit() {
    }, delay);
 }
 
-/*
-Router.get("/activate/:id", (request: Request, response: Response) => {
-   const memberId = request?.params?.id;
-   CSMemers.guild.members.fetch(memberId).then((member) => {
-      if (!member) return;
-      if (member.roles.cache.has(config.guild.roles.specialty.verified)) return;
-      member.roles.add(config.guild.roles.specialty.verified).catch();
-      const timeout = Verifier.remove(memberId);
-      if (!timeout) return;
-      clearTimeout(timeout.timeout);
-      timeout.interaction.followUp({content: `Hey <@${memberId}>, you have successfully been verified. Thank you!`, ephemeral: true}).catch();
-   });
+Router.express.get(`/activate/:id`, (request, response) => {
+   CSMemers.handleAutomaticRole(request, response, config.guild.roles.specialty.verified).catch(error =>
+       CSMemers.logger.error("Error Applying Automatic Role", error)
+   );
 });
- */

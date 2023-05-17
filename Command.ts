@@ -22,4 +22,6 @@ export class GlobalCommand extends Command {
 
 type GlobalCommandFunction = (interaction: ChatInputCommandInteraction, application: Application) => Promise<void>;
 
-type CommandFunction = | ((interaction: ChatInputCommandInteraction) => Promise<void>) | (GlobalCommandFunction);
+type GuildCommandFunction = (interaction: ChatInputCommandInteraction) => Promise<void>;
+
+type CommandFunction = GuildCommandFunction | GlobalCommandFunction;

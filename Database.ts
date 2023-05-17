@@ -15,6 +15,17 @@ export class Database {
     public static teams: Collection;
     public static games: Collection;
     public static episode = 1;
+    public static episodeNames: Map<number, string> = new Map([
+        [1, "First Spike"],
+        [2, "Ace Avenue"],
+        [3, "Match Point"],
+        [4, "Power Play"],
+        [5, "Court Chaos"],
+        [6, "Dig Deep"],
+        [7, "Top Spin"],
+        [8, "Serve and Volley"],
+        [9, "Championship Drive"]
+    ])
 
     public static async load(): Promise<void> {
         await new MongoClient(connectionString).connect().then((client) => {

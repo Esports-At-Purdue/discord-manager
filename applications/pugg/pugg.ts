@@ -1,30 +1,24 @@
 import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
-import * as express from "express";
-import {Request, Response} from "express";
 import {
-    ButtonInteraction,
     CategoryChannel,
     Events,
     GuildMember,
     Interaction,
     Message,
-    ModalSubmitInteraction, SelectMenuInteraction, TextBasedChannel,
+    TextBasedChannel,
 } from "discord.js";
-import {Verifier} from "../../Verifier";
 import {PuggApp} from "./PuggApp";
 import {Student} from "../../Student";
 import {Ticket} from "../../Ticket";
-import {PurdueModal} from "../../modals/Purdue.Modal";
+import {Router} from "../../Router";
 
 SourceMaps.install();
 
 export const Pugg = new PuggApp();
-const Router = express.Router();
 
 Pugg.client.login(config.token).then(() => {
     Pugg.load(config.token, config.guild.id, config.guild.channels.logs).catch();
-    Router.use(express.json());
 });
 
 Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
@@ -43,7 +37,7 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         }
     }
 
-    if (interaction instanceof ButtonInteraction) {
+    if (interaction.isButton()) {
 
         try {
 
@@ -57,14 +51,7 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             const member = interaction.member as GuildMember;
 
             if (role.id == config.guild.roles.purdue) {
-                if (student) {
-                    member.roles.add(role.id).catch();
-                    interaction.reply({content: `You are verified. Thank you!`, ephemeral: true}).catch();
-                    return;
-                }
-
-                const modal = new PurdueModal();
-                interaction.showModal(modal).catch();
+                Pugg.handlePurdueButton(interaction, student, member, role.id).catch();
                 return;
             }
 
@@ -87,8 +74,8 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
                     return;
                 }
 
-                const parentCategory = await Pugg.guild.channels.fetch(config.guild.channels.tickets) as CategoryChannel;
-                const ticket = await Ticket.open(student, Pugg, parentCategory, role.name);
+                const parentCategory = await Pugg.guild.channels.fetch(config.guild.channels.support);
+                const ticket = await Ticket.open(student, Pugg, parentCategory as CategoryChannel, role.name);
                 ticket.save().catch();
                 interaction.reply({content: `A ticket has been opened in <#${ticket.id}>`, ephemeral: true}).catch();
                 return;
@@ -97,39 +84,37 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             if (member.roles.cache.has(role.id)) {
                 member.roles.remove(role.id).catch();
                 interaction.reply({content: `You removed **<@&${role.id}>**.`, ephemeral: true}).catch();
+                return;
             } else {
                 member.roles.add(role.id).catch();
                 interaction.reply({content: `You applied **<@&${role.id}>**.`, ephemeral: true}).catch();
-            }
-            return;
-
-        } catch (error) {
-            Pugg.logger.error(`Button by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
-        }
-    }
-
-    if (interaction instanceof ModalSubmitInteraction) {
-        const email = interaction.fields.getTextInputValue("email");
-
-        try {
-
-            if (!Verifier.isValidEmail(email)) {
-                interaction.reply({content: `Sorry, address you provided, \`${email}\`, is invalid. Please provide a valid Purdue address.`, ephemeral: true}).catch();
                 return;
             }
 
-            Verifier.registerNewStudent(user, email, interaction);
-            interaction.reply({content: `A Verification Email has been sent to \`${email}\`.`, ephemeral: true}).catch();
-            return;
 
         } catch (error) {
-            Pugg.logger.error(`Modal by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            Pugg.logger.error(`Button by ${user.username} errored`, error);
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
 
-    if (interaction instanceof SelectMenuInteraction) {
+    if (interaction.isModalSubmit()) {
+        const name = interaction.customId;
+
+        try {
+            if (name == "purdue") {
+                Pugg.handlePurdueModal(user, interaction).catch();
+                return;
+            }
+        } catch (error) {
+            Pugg.logger.error(`Modal by ${user.username} errored`, error);
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+        }
+    }
+
+    if (interaction.isStringSelectMenu()) {
 
         try {
 
@@ -147,7 +132,8 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
         } catch (error) {
             Pugg.logger.error(`Menu by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
 });
@@ -166,15 +152,8 @@ Pugg.client.on(Events.MessageCreate, (message: Message) => {
 
 });
 
-Router.get("/activate/:id", (request: Request, response: Response) => {
-    const memberId = request?.params?.id;
-    Pugg.guild.members.fetch(memberId).then((member) => {
-        if (!member) return;
-        if (member.roles.cache.has(config.guild.roles.purdue)) return;
-        member.roles.add(config.guild.roles.purdue).catch();
-        const timeout = Verifier.remove(memberId);
-        if (!timeout) return;
-        clearTimeout(timeout.timeout);
-        timeout.interaction.followUp({content: `Hey <@${memberId}>, you have successfully been verified. Thank you!`, ephemeral: true}).catch();
-    });
+Router.express.get(`/activate/:id`, (request, response) => {
+    Pugg.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
+        Pugg.logger.error("Error Applying Automatic Role", error)
+    );
 });

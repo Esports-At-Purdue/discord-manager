@@ -12,7 +12,7 @@ const requiredFiles = [
 export class PuggApp extends Application {
     public constructor() {
         super("pugg");
-        this.commands = new CommandRegister()
+        this.commands
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);
     }

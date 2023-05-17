@@ -1,21 +1,12 @@
 import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
-import {
-    AttachmentBuilder,
-    Colors,
-    Events,
-    Interaction,
-    TextBasedChannel
-} from "discord.js";
+import {Events, Interaction, TextBasedChannel} from "discord.js";
 import {Database} from "../../Database";
-import {LeaderboardRow} from "../../components/Leaderboard.Row";
-import {Player, PlayerStats} from "../../Player";
+import {Player} from "../../Player";
 import {GameType} from "../../Game";
-import {PlayerModal} from "../../modals/Player.Modal";
 import {Student} from "../../Student";
-import {PurdueModal} from "../../modals/Purdue.Modal";
-import {Verifier} from "../../Verifier";
 import {CSGOApp} from "./CSGOApp";
+import {Router} from "../../Router";
 
 SourceMaps.install();
 
@@ -51,80 +42,37 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         try {
 
             if (interaction.customId.startsWith("page")) {
-
-                await interaction.deferUpdate();
-                const page = Number.parseInt(interaction.customId.slice(5));
-                const maxPages = Math.ceil(await Database.players.countDocuments() / 5);
-                const actionRow = new LeaderboardRow(page, maxPages);
-                const filePath = `./media/${page}-leaderboard.png`;
-                const image = new AttachmentBuilder(filePath);
-                interaction.editReply({content: null, files: [image], components: [actionRow]}).catch();
-                return;
+                const game = interaction.customId.split("-")[1];
+                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
+                CSGO.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
             }
 
             if (interaction.customId == "join") {
-                if (!player) {
-                    const modal = new PlayerModal();
-                    interaction.showModal(modal).catch();
-                    return;
-                }
-                if (CSGO.queue.queue.has(player.id)) {
-                    interaction.reply({content: `You are already in the queue.`, ephemeral: true}).catch();
-                    return;
-                }
-
-                CSGO.queue.join(player, interaction);
-                if (CSGO.queue.queue.size != CSGO.queue.capacity || CSGO.queue.capacity > 0) return;
-                CSGO.queue.update(`A new Game has began!`, Colors.Gold).catch();
-                for (const entry of CSGO.queue.queue) clearTimeout(entry[1]);
-                // ToDo New Game
-                CSGO.queue.queue = new Map();
-
+                CSGO.handleQueueJoinButton(interaction, player, CSGO.queue).catch();
+                return;
             }
 
             if (interaction.customId == "leave") {
-                if (!player) {
-                    const modal = new PlayerModal();
-                    interaction.showModal(modal).catch();
-                    return;
-                }
-                if (!CSGO.queue.queue.has(player.id)) {
-                    interaction.reply({content: `You are not in the queue.`, ephemeral: true}).catch();
-                    return;
-                }
-                CSGO.queue.leave(player);
+                CSGO.handleQueueLeaveButton(interaction, player, CSGO.queue).catch();
+                return;
             }
 
             if (interaction.customId == "bump") {
-                if (!player) {
-                    const modal = new PlayerModal();
-                    interaction.showModal(modal).catch();
-                    return;
-                }
-                CSGO.queue.bump(player);
+                CSGO.handleQueueBumpButton(interaction, player, CSGO.queue).catch();
+                return;
             }
 
             const role = await CSGO.guild.roles.fetch(interaction.customId);
             const member = await CSGO.guild.members.fetch(user.id);
 
             if (role.id == config.guild.roles.purdue) {
-                if (student && student.verified) {
-                    member.roles.add(role.id).catch();
-                    interaction.reply({content: `You are verified. Thank you!`, ephemeral: true}).catch();
-                    return;
-                }
-
-                const modal = new PurdueModal();
-                interaction.showModal(modal).catch();
+                CSGO.handlePurdueButton(interaction, student, member, role.id).catch();
                 return;
             }
 
             if (role.id == config.guild.roles.tenmans) {
-                if (!player) {
-                    const modal = new PlayerModal();
-                    interaction.showModal(modal).catch();
-                    return;
-                }
+                CSGO.handlePlayerButton(interaction, player).catch();
+                // No Return
             }
 
             if (member.roles.cache.has(role.id)) {
@@ -151,31 +99,12 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             const name = interaction.customId;
 
             if (name == "register") {
-                const username = interaction.fields.getTextInputValue("username");
-                const member = await CSGO.guild.members.fetch(interaction.user.id);
-                let player = await Player.fetch(interaction.user.id);
-
-                if (!player) {
-                    player = new Player(interaction.user.id, null, null, username, PlayerStats.newStats());
-                }
-
-                player.save().catch();
-                member.roles.add(config.guild.roles.tenmans).catch();
-                interaction.reply({content: `You have been registered as ${player.getName(GameType.CSGO)}.`, ephemeral: true}).catch();
-                Database.updateRankings(GameType.CSGO, CSGO).catch();
+                CSGO.handlePlayerModal(interaction, GameType.CSGO, config.guild.roles.tenmans).catch();
                 return;
             }
 
             if (name == "purdue") {
-                const email = interaction.fields.getTextInputValue("email");
-
-                if (!Verifier.isValidEmail(email)) {
-                    interaction.reply({content: `Sorry, address you provided, \`${email}\`, is invalid. Please provide a valid Purdue address.`, ephemeral: true}).catch();
-                    return;
-                }
-
-                Verifier.registerNewStudent(user, email, interaction).catch();
-                interaction.reply({content: `A Verification Email has been sent to \`${email}\`.`, ephemeral: true}).catch();
+                CSGO.handlePurdueModal(user, interaction).catch();
                 return;
             }
 
@@ -185,4 +114,10 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
+});
+
+Router.express.get(`/activate/:id`, (request, response) => {
+    CSGO.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
+        CSGO.logger.error("Error Applying Automatic Role", error)
+    );
 });

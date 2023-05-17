@@ -19,8 +19,11 @@ export class Player implements Saveable {
     }
 
     public getName(game: GameType) {
-        if (game == GameType.Wallyball) return `${this.firstName} ${this.lastName.charAt(0)}`;
-        return this.username;
+        const firstName = this.firstName ?? "Unknown";
+        const lastName = this.lastName ?? "Unknown";
+        const username = this.username ?? "Unknown";
+        if (game == GameType.Wallyball) return `${firstName} ${lastName.charAt(0)}`;
+        return username;
     }
 
     public getElo(game: GameType) {
@@ -146,12 +149,13 @@ export class PlayerStats {
         this.wallyball = wallyball;
     }
 
-    public static newStats(): PlayerStats {
-        const csgoStats = new GameStats(400, 1000, 0, 0, 0);
-        const siegeStats = new GameStats(400, 1000, 0, 0, 0);
-        const overwatchStats = new GameStats(400, 1000, 0, 0, 0);
-        const valorantStats = new GameStats(400, 1000, 0, 0, 0);
-        const wallyballStats = new GameStats(400, 1000, 0, 0, 0);
+    public static async newStats(): Promise<PlayerStats> {
+        const totalPlayers = await Database.players.countDocuments();
+        const csgoStats = new GameStats(400, totalPlayers + 1, 0, 0, 0);
+        const siegeStats = new GameStats(400, totalPlayers + 1, 0, 0, 0);
+        const overwatchStats = new GameStats(400, totalPlayers + 1, 0, 0, 0);
+        const valorantStats = new GameStats(400, totalPlayers + 1, 0, 0, 0);
+        const wallyballStats = new GameStats(400, totalPlayers + 1, 0, 0, 0);
         return new PlayerStats(csgoStats, siegeStats, overwatchStats, valorantStats, wallyballStats);
     }
 

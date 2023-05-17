@@ -7,6 +7,7 @@ import {PurdueModal} from "../../modals/Purdue.Modal";
 import {Verifier} from "../../Verifier";
 
 SourceMaps.install();
+
 export const PurdueMath = new MathApp();
 
 PurdueMath.client.login(config.token).then(async () => {
@@ -38,15 +39,7 @@ PurdueMath.client.on(Events.InteractionCreate, async (interaction: Interaction) 
 
             if (role.id == config.guild.roles.purdue) {
                 const student = await Student.fetch(user.id);
-
-                if (student && student.verified) {
-                    member.roles.add(role.id).catch();
-                    interaction.reply({content: `You are verified. Thank you!`, ephemeral: true}).catch();
-                    return;
-                }
-
-                const modal = new PurdueModal();
-                interaction.showModal(modal).catch();
+                PurdueMath.handlePurdueButton(interaction, student, member, role.id).catch();
                 return;
             }
 
@@ -76,16 +69,7 @@ PurdueMath.client.on(Events.InteractionCreate, async (interaction: Interaction) 
             const name = interaction.customId;
 
             if (name == "purdue") {
-                const email = interaction.fields.getTextInputValue("email");
-
-                if (!Verifier.isValidEmail(email)) {
-                    interaction.reply({content: `Sorry, address you provided, \`${email}\`, is invalid. Please provide a valid Purdue address.`, ephemeral: true}).catch();
-                    return;
-                }
-
-                Verifier.registerNewStudent(user, email, interaction).catch();
-                interaction.reply({content: `A Verification Email has been sent to \`${email}\`.`, ephemeral: true}).catch();
-                return;
+                PurdueMath.handlePurdueModal(user, interaction).catch();
             }
 
         } catch (error) {
