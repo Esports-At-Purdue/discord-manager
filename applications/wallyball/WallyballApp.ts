@@ -15,7 +15,7 @@ export class WallyballApp extends Application {
 
     constructor() {
         super("wallyball", GameType.Wallyball);
-        this.queue = new Queue(86400000, -1, GameType.Wallyball, new Map(), false);
+        this.queue = new Queue(86400000, -1, false, GameType.Wallyball, new Map());
         this.commands = new CommandRegister()
             .registerCommand(RegisterCommand)
         this.ensureDataFilesExist(requiredFiles);

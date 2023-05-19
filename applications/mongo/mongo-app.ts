@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as http from "http";
 import * as express from "express";
-import * as config from "../../config.json";
 import {Request, Response} from "express";
+import * as config from "../../config.json";
 import {Database} from "../../Database";
 import {Student} from "../../Student";
 import {Verifier} from "../../Verifier";
@@ -14,16 +14,29 @@ Database.load().then(async () => {
     const app = express();
     app.use("/students", StudentRouter);
     app.use("/players", PlayerRouter);
+    app.use("/csgo", CSGORouter);
+    app.use("/siege", SiegeRouter);
+    app.use("/overwatch", OverwatchRouter);
+    app.use("/valorant", ValorantRouter);
     app.use("/wallyball", WallyballRouter);
     app.listen(1560);
 })
 
 const StudentRouter = express.Router();
 const PlayerRouter = express.Router();
+const CSGORouter = express.Router();
+const SiegeRouter = express.Router();
+const OverwatchRouter = express.Router();
+const ValorantRouter = express.Router();
 const WallyballRouter = express.Router();
+
 
 StudentRouter.use(express.json());
 PlayerRouter.use(express.json());
+CSGORouter.use(express.json());
+SiegeRouter.use(express.json());
+OverwatchRouter.use(express.json());
+ValorantRouter.use(express.json());
 WallyballRouter.use(express.json());
 
 
@@ -158,7 +171,8 @@ PlayerRouter.get("/", async (req: Request, res: Response) => {
         const documents = await Database.players.find({}).toArray();
         const players = documents
             .map(document => Player.fromObject(document))
-            .sort((a, b) => b.getElo(GameType.Wallyball) - a.getElo(GameType.Wallyball));
+            .sort((a, b) => b.getElo(GameType.Wallyball) - a.getElo(GameType.Wallyball))
+            .filter((player) => player.username != null);
 
         const tableRows = players.map(player => `
             <tr>
@@ -220,26 +234,198 @@ PlayerRouter.get("/:id", async (req: Request, res: Response) => {
 
 
 /*
-    Wallyball Router
+    Game Routers
  */
 
-WallyballRouter.get("/", async (req: Request, res: Response) => {
+CSGORouter.get("/", async (req: Request, res: Response) => {
     try {
-
-        const documents = await Database.players.find({}).toArray();
-        const players = documents
-            .map(document => Player.fromObject(document))
-            .filter(player => player.getWins(GameType.Wallyball) + player.getLosses(GameType.Wallyball) > 0)
-            .sort((a, b) => a.getRank(GameType.Wallyball) - b.getRank(GameType.Wallyball));
+        const game = GameType.CSGO;
+        const players = await Database.getPlayersThatHavePlayedGameSorted(game);
 
         const tableRows = players.map(player => `
             <tr>
-                <td>${player.getName(GameType.Wallyball)}</td>
-                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(GameType.Wallyball))}</td>
-                <td style="text-align: left;">${player.getElo(GameType.Wallyball)}</td>
-                <td style="text-align: left;">${player.getWins(GameType.Wallyball)}</td>
-                <td style="text-align: left;">${player.getLosses(GameType.Wallyball)}</td>
-                <td style="text-align: left;">${player.getPoints(GameType.Wallyball)}</td>
+                <td>${player.getName(GameType.CSGO)}</td>
+                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(game))}</td>
+                <td style="text-align: left;">${player.getElo(game)}</td>
+                <td style="text-align: left;">${player.getWins(game)}</td>
+                <td style="text-align: left;">${player.getLosses(game)}</td>
+                <td style="text-align: left;">${player.getPoints(game)}</td>
+                <!-- Add more columns as needed -->
+            </tr>
+        `);
+
+        // HTML template for the table
+        const tableHTML = `
+            <table style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Rank</th>
+                        <th>Elo</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                        <!-- Add more column headers as needed -->
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows.join('')}
+                </tbody>
+            </table>
+        `;
+
+        res.status(200).send(tableHTML);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+SiegeRouter.get("/", async (req: Request, res: Response) => {
+    try {
+        const game = GameType.Siege;
+        const players = await Database.getPlayersThatHavePlayedGameSorted(game);
+
+        const tableRows = players.map(player => `
+            <tr>
+                <td>${player.getName(GameType.CSGO)}</td>
+                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(game))}</td>
+                <td style="text-align: left;">${player.getElo(game)}</td>
+                <td style="text-align: left;">${player.getWins(game)}</td>
+                <td style="text-align: left;">${player.getLosses(game)}</td>
+                <td style="text-align: left;">${player.getPoints(game)}</td>
+                <!-- Add more columns as needed -->
+            </tr>
+        `);
+
+        // HTML template for the table
+        const tableHTML = `
+            <table style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Rank</th>
+                        <th>Elo</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                        <!-- Add more column headers as needed -->
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows.join('')}
+                </tbody>
+            </table>
+        `;
+
+        res.status(200).send(tableHTML);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+OverwatchRouter.get("/", async (req: Request, res: Response) => {
+    try {
+        const game = GameType.Overwatch;
+        const players = await Database.getPlayersThatHavePlayedGameSorted(game);
+
+        const tableRows = players.map(player => `
+            <tr>
+                <td>${player.getName(GameType.CSGO)}</td>
+                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(game))}</td>
+                <td style="text-align: left;">${player.getElo(game)}</td>
+                <td style="text-align: left;">${player.getWins(game)}</td>
+                <td style="text-align: left;">${player.getLosses(game)}</td>
+                <td style="text-align: left;">${player.getPoints(game)}</td>
+                <!-- Add more columns as needed -->
+            </tr>
+        `);
+
+        // HTML template for the table
+        const tableHTML = `
+            <table style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Rank</th>
+                        <th>Elo</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                        <!-- Add more column headers as needed -->
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows.join('')}
+                </tbody>
+            </table>
+        `;
+
+        res.status(200).send(tableHTML);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+ValorantRouter.get("/", async (req: Request, res: Response) => {
+    try {
+        const game = GameType.Valorant;
+        const players = await Database.getPlayersThatHavePlayedGameSorted(game);
+
+        const tableRows = players.map(player => `
+            <tr>
+                <td>${player.getName(GameType.CSGO)}</td>
+                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(game))}</td>
+                <td style="text-align: left;">${player.getElo(game)}</td>
+                <td style="text-align: left;">${player.getWins(game)}</td>
+                <td style="text-align: left;">${player.getLosses(game)}</td>
+                <td style="text-align: left;">${player.getPoints(game)}</td>
+                <!-- Add more columns as needed -->
+            </tr>
+        `);
+
+        // HTML template for the table
+        const tableHTML = `
+            <table style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Rank</th>
+                        <th>Elo</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                        <!-- Add more column headers as needed -->
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows.join('')}
+                </tbody>
+            </table>
+        `;
+
+        res.status(200).send(tableHTML);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+WallyballRouter.get("/", async (req: Request, res: Response) => {
+    try {
+        const game = GameType.Wallyball
+        const players = await Database.getPlayersThatHavePlayedGameSorted(game);
+
+        const tableRows = players.map(player => `
+            <tr>
+                <td>${player.getName(game)}</td>
+                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(game))}</td>
+                <td style="text-align: left;">${player.getElo(game)}</td>
+                <td style="text-align: left;">${player.getWins(game)}</td>
+                <td style="text-align: left;">${player.getLosses(game)}</td>
+                <td style="text-align: left;">${player.getPoints(game)}</td>
                 <!-- Add more columns as needed -->
             </tr>
         `);
@@ -270,6 +456,7 @@ WallyballRouter.get("/", async (req: Request, res: Response) => {
         res.status(500).send(error.message);
     }
 });
+
 
 function getOrdinalSuffix(i: number): string {
     const j = i % 10;

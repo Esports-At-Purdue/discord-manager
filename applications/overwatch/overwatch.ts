@@ -42,9 +42,8 @@ Overwatch.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         try {
 
             if (interaction.customId.startsWith("page")) {
-                const game = interaction.customId.split("-")[1];
-                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
-                Overwatch.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
+                Overwatch.handleLeaderboardButton(interaction).catch();
+                return;
             }
 
             if (interaction.customId == "join") {
@@ -99,7 +98,12 @@ Overwatch.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         try {
 
             if (name == "register") {
-                Overwatch.handlePlayerModal(interaction, GameType.Overwatch, config.guild.roles.pugs).catch();
+                Overwatch.handlePlayerModal(interaction, config.guild.roles.pugs).catch();
+                return;
+            }
+
+            if (name == "wallyball") {
+                Overwatch.handleWallyballModal(interaction, null).catch();
                 return;
             }
 

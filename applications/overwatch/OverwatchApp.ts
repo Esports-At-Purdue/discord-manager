@@ -15,7 +15,7 @@ export class OverwatchApp extends Application {
 
     constructor() {
         super("overwatch", GameType.Overwatch);
-        this.queue = new Queue(3600000, 10, GameType.Overwatch, new Map(), true);
+        this.queue = new Queue(3600000, 10, true, GameType.Overwatch, new Map());
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

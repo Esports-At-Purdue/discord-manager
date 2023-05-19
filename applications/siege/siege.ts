@@ -42,9 +42,8 @@ Siege.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         try {
 
             if (interaction.customId.startsWith("page")) {
-                const game = interaction.customId.split("-")[1];
-                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
-                Siege.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
+                Siege.handleLeaderboardButton(interaction).catch();
+                return;
             }
 
             if (interaction.customId == "join") {
@@ -113,7 +112,12 @@ Siege.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         try {
 
             if (name == "register") {
-                Siege.handlePlayerModal(interaction, GameType.Siege, config.guild.roles.tenmans).catch();
+                Siege.handlePlayerModal(interaction, config.guild.roles.tenmans).catch();
+                return;
+            }
+
+            if (name == "wallyball") {
+                Siege.handleWallyballModal(interaction, null).catch();
                 return;
             }
 

@@ -14,7 +14,7 @@ export class SiegeApp extends Application {
 
     constructor() {
         super("siege", GameType.Siege);
-        this.queue = new Queue(3600000, 10, GameType.Siege, new Map(), true);
+        this.queue = new Queue(3600000, 10, true, GameType.Siege, new Map());
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

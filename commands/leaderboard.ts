@@ -1,11 +1,10 @@
-import {AttachmentBuilder, ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
+import {AttachmentBuilder, SlashCommandBuilder} from "discord.js";
 import {LeaderboardRow} from "../components/Leaderboard.Row";
-import {Application} from "../Application";
 import {GlobalCommand} from "../Command";
 import {Database} from "../Database";
 import {GameType} from "../Game";
 
-export const leaderboardCommand = new GlobalCommand(
+export const LeaderboardCommand = new GlobalCommand(
     new SlashCommandBuilder()
         .setName('leaderboard')
         .setDescription('Displays the Leaderboard')
@@ -28,7 +27,7 @@ export const leaderboardCommand = new GlobalCommand(
             .setMinValue(1)
         )
     ,
-    async function execute(interaction: ChatInputCommandInteraction, application: Application) {
+    async function execute(interaction, application) {
         await interaction.deferReply();
         const game = interaction.options.getString("game") as GameType ?? application.game ?? GameType.CSGO;
         const totalPlayers = await Database.getTotalPlayers(game);
@@ -41,7 +40,7 @@ export const leaderboardCommand = new GlobalCommand(
             const actionRow = new LeaderboardRow(game, page, maxPages);
             await interaction.editReply({files: [attachment], components: [actionRow]});
         } catch (error) {
-            const reply = await interaction.editReply({content: `Sorry, the leaderboard in not currently available`});
+            const reply = await interaction.editReply({content: `Sorry, this leaderboard is not currently available`});
             setTimeout(() => reply.delete(), 5000);
         }
     }

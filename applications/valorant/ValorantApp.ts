@@ -16,7 +16,7 @@ export class ValorantApp extends Application {
 
     constructor() {
         super("valorant", GameType.Valorant);
-        this.queue = new Queue(3600000, 10, GameType.Valorant, new Map(), true);
+        this.queue = new Queue(3600000, 10, true, GameType.Valorant, new Map());
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

@@ -15,14 +15,14 @@ import {QueueRow} from "./components/Queue.Row";
 export class Queue {
     public timer: number;
     public capacity: number;
+    public messageLimit: boolean;
+    public verbose: boolean;
     public game: GameType;
     public queue: Map<string, NodeJS.Timeout>;
     public channel: TextBasedChannel;
     public message: Message;
-    public messageLimit: boolean;
-    public verbose: boolean;
 
-    constructor(timer: number, capacity: number, game: GameType, queue: Map<string, NodeJS.Timeout>, verbose: boolean) {
+    constructor(timer: number, capacity: number, verbose: boolean, game: GameType, queue: Map<string, NodeJS.Timeout>) {
         this.timer = timer;
         this.capacity = capacity;
         this.game = game;

@@ -42,9 +42,8 @@ Valorant.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
         try {
 
             if (interaction.customId.startsWith("page")) {
-                const game = interaction.customId.split("-")[1];
-                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
-                Valorant.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
+                Valorant.handleLeaderboardButton(interaction).catch();
+                return;
             }
 
             if (interaction.customId == "join") {
@@ -107,7 +106,7 @@ Valorant.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
         try {
 
             if (name == "register") {
-                Valorant.handlePlayerModal(interaction, GameType.Valorant, config.guild.roles.tenmans).catch();
+                Valorant.handlePlayerModal(interaction, config.guild.roles.tenmans).catch();
                 return;
             }
 

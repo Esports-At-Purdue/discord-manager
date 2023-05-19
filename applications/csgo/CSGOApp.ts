@@ -15,7 +15,7 @@ export class CSGOApp extends Application {
 
     public constructor() {
         super("csgo", GameType.CSGO);
-        this.queue = new Queue(3600000, 10, GameType.CSGO, new Map(), true);
+        this.queue = new Queue(3600000, 10, true, GameType.CSGO, new Map());
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

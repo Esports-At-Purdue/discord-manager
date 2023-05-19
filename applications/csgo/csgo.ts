@@ -42,9 +42,8 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         try {
 
             if (interaction.customId.startsWith("page")) {
-                const game = interaction.customId.split("-")[1];
-                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
-                CSGO.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
+                CSGO.handleLeaderboardButton(interaction).catch();
+                return;
             }
 
             if (interaction.customId == "join") {
@@ -99,7 +98,12 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             const name = interaction.customId;
 
             if (name == "register") {
-                CSGO.handlePlayerModal(interaction, GameType.CSGO, config.guild.roles.tenmans).catch();
+                CSGO.handlePlayerModal(interaction, config.guild.roles.tenmans).catch();
+                return;
+            }
+
+            if (name == "wallyball") {
+                CSGO.handleWallyballModal(interaction, null).catch();
                 return;
             }
 

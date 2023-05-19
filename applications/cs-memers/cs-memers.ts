@@ -56,6 +56,11 @@ CSMemers.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
 
       try {
 
+         if (interaction.customId.startsWith("page")) {
+            CSMemers.handleLeaderboardButton(interaction).catch();
+            return;
+         }
+
          if (!role) {
             await interaction.reply({content: "This is a legacy course/role. You can't have it, sorry!", ephemeral: true});
             return;
@@ -96,6 +101,17 @@ CSMemers.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
          if (name == "purdue") {
             CSMemers.handlePurdueModal(user, interaction).catch();
          }
+
+         if (name == "register") {
+            CSMemers.handlePlayerModal(interaction, null).catch();
+            return;
+         }
+
+         if (name == "wallyball") {
+            CSMemers.handleWallyballModal(interaction, null).catch();
+            return;
+         }
+
       } catch (error) {
          CSMemers.logger.error(`Modal by ${user.username} errored`, error);
          if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();

@@ -1,9 +1,8 @@
-import {ActivityType, ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder} from "discord.js";
-import {Application} from "../Application";
+import {ActivityType, PermissionsBitField, SlashCommandBuilder} from "discord.js";
 import {GlobalCommand} from "../Command";
 import * as fs from "fs";
 
-export const statusCommand = new GlobalCommand(
+export const StatusCommand = new GlobalCommand(
     new SlashCommandBuilder()
         .setName("status")
         .setDescription("Sets the Bot activity status")
@@ -26,7 +25,7 @@ export const statusCommand = new GlobalCommand(
             .setDescription("The name of the activity")
             .setRequired(true)
         ),
-    async function execute(interaction: ChatInputCommandInteraction, application: Application) {
+    async function execute(interaction, application) {
         const activityName = interaction.options.getString("activity_name");
         const activityType = interaction.options.getInteger("activity_type") as ActivityType;
 

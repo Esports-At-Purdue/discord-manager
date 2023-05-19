@@ -1,13 +1,12 @@
 import {GlobalCommand} from "../Command";
-import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
-import {Application} from "../Application";
+import {SlashCommandBuilder} from "discord.js";
 
-export const pingCommand = new GlobalCommand(
+export const PingCommand = new GlobalCommand(
     new SlashCommandBuilder()
         .setName("ping")
         .setDescription("pong")
     ,
-    async function execute(interaction: ChatInputCommandInteraction, application: Application) {
+    async function execute(interaction, application) {
         interaction.reply({content: `${application.name}, pong!`, ephemeral: true}).catch();
     }
 )

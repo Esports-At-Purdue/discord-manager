@@ -94,12 +94,15 @@ export class Application {
         }
     }
 
-    public async handleLeaderboardButton(interaction: ButtonInteraction, game: GameType, pageNumber: number) {
+    public async handleLeaderboardButton(interaction: ButtonInteraction) {
         await interaction.deferUpdate();
+        const leaderboardProperties = interaction.customId.split("-");
+        const page = Number.parseInt(leaderboardProperties[1]);
+        const game = String(leaderboardProperties[2]) as GameType;
         const totalPlayers = await Database.getTotalPlayers(game);
         const maxPages = Math.ceil(totalPlayers / 5);
-        const actionRow = new LeaderboardRow(game, pageNumber, maxPages);
-        const filePath = `../../media/leaderboards/${game}/${pageNumber}.png`;
+        const actionRow = new LeaderboardRow(game, page, maxPages);
+        const filePath = `../../media/leaderboards/${game}/${page}.png`;
         const image = new AttachmentBuilder(filePath);
         interaction.editReply({content: null, files: [image], components: [actionRow]}).catch();
         return;
@@ -202,7 +205,7 @@ export class Application {
         return;
     }
 
-    public async handlePlayerModal(interaction: ModalSubmitInteraction, gameType: GameType, roleId: string) {
+    public async handlePlayerModal(interaction: ModalSubmitInteraction, roleId: string) {
         const username = interaction.fields.getTextInputValue("username");
         const member = await this.guild.members.fetch(interaction.user.id);
         let player = await Player.fetch(interaction.user.id);
@@ -213,9 +216,8 @@ export class Application {
 
         player.username = username;
         player.save().catch();
-        member.roles.add(roleId).catch();
-        interaction.reply({content: `You have been registered as ${player.getName(gameType)}.`, ephemeral: true}).catch();
-        Database.updateRankings(gameType, this).catch();
+        if (roleId) member.roles.add(roleId).catch();
+        interaction.reply({content: `You have been registered as ${player.username}.`, ephemeral: true}).catch();
         return;
     }
 
@@ -232,9 +234,8 @@ export class Application {
         player.firstName = firstName;
         player.lastName = lastName;
         player.save().catch();
-        member.roles.add(roleId).catch();
+        if (roleId) member.roles.add(roleId).catch();
         interaction.reply({content: `You have been registered as ${player.getName(GameType.Wallyball)}.`, ephemeral: true}).catch();
-        Database.updateRankings(GameType.Wallyball, this).catch();
         return;
     }
 

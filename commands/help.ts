@@ -1,8 +1,7 @@
-import {ChatInputCommandInteraction, EmbedBuilder, SlashCommandBuilder} from "discord.js";
-import {Application} from "../Application";
+import {EmbedBuilder, SlashCommandBuilder} from "discord.js";
 import {GlobalCommand} from "../Command";
 
-export const helpCommand = new GlobalCommand(
+export const HelpCommand = new GlobalCommand(
     new SlashCommandBuilder()
         .setName("help")
         .setDescription("Displays info about other commands.")
@@ -13,7 +12,7 @@ export const helpCommand = new GlobalCommand(
             .setRequired(false)
         )
     ,
-    async function execute(interaction: ChatInputCommandInteraction, application: Application) {
+    async function execute(interaction, application) {
         const command = interaction.options.getString("command") ?? "";
         let description = "";
         const list = [];

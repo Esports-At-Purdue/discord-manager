@@ -41,9 +41,7 @@ Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         try {
 
             if (interaction.customId.startsWith("page")) {
-                const game = interaction.customId.split("-")[2];
-                const pageNumber = Number.parseInt(interaction.customId.split("-")[1]);
-                Wallyball.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
+                Wallyball.handleLeaderboardButton(interaction).catch();
                 return;
             }
 
@@ -58,6 +56,11 @@ Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         const name = interaction.customId;
 
         try {
+
+            if (name == "register") {
+                Wallyball.handlePlayerModal(interaction, null).catch();
+                return;
+            }
 
             if (name == "wallyball") {
                 Wallyball.handleWallyballModal(interaction, config.guild.roles.wallyball).catch();

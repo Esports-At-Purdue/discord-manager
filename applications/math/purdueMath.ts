@@ -35,6 +35,11 @@ PurdueMath.client.on(Events.InteractionCreate, async (interaction: Interaction) 
 
         try {
 
+            if (interaction.customId.startsWith("page")) {
+                PurdueMath.handleLeaderboardButton(interaction).catch();
+                return;
+            }
+
             const member = await PurdueMath.guild.members.fetch(user);
 
             if (role.id == config.guild.roles.purdue) {
@@ -72,6 +77,16 @@ PurdueMath.client.on(Events.InteractionCreate, async (interaction: Interaction) 
 
             if (name == "purdue") {
                 PurdueMath.handlePurdueModal(user, interaction).catch();
+            }
+
+            if (name == "register") {
+                PurdueMath.handlePlayerModal(interaction, null).catch();
+                return;
+            }
+
+            if (name == "wallyball") {
+                PurdueMath.handleWallyballModal(interaction, null).catch();
+                return;
             }
 
         } catch (error) {

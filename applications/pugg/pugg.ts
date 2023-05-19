@@ -42,6 +42,11 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
         try {
 
+            if (interaction.customId.startsWith("page")) {
+                Pugg.handleLeaderboardButton(interaction).catch();
+                return;
+            }
+
             if (interaction.customId == "close") {
                 const ticket = await Ticket.fetch(interaction.channelId);
                 ticket.close(interaction).catch()
@@ -104,10 +109,22 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         const name = interaction.customId;
 
         try {
+
             if (name == "purdue") {
                 Pugg.handlePurdueModal(user, interaction).catch();
                 return;
             }
+
+            if (name == "register") {
+                Pugg.handlePlayerModal(interaction, null).catch();
+                return;
+            }
+
+            if (name == "wallyball") {
+                Pugg.handleWallyballModal(interaction, null).catch();
+                return;
+            }
+
         } catch (error) {
             Pugg.logger.error(`Modal by ${user.username} errored`, error);
             if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
