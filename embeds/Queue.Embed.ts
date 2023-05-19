@@ -1,15 +1,14 @@
-import {EmbedBuilder} from "discord.js";
+import {ColorResolvable, EmbedBuilder} from "discord.js";
 import {Player} from "../Player";
+import {GameType} from "../Game";
 
 export class QueueEmbed extends EmbedBuilder {
-    public constructor(message: string, players: Array<Player>) {
+    public constructor(message: string, players: Array<Player>, capacity: number, game: GameType, color: ColorResolvable) {
         super();
-        let description = "";
-        for (let i = 0; i < players.length; i++) {
-            description += `**${i + 1}.** ${players[i].firstName}\n`;
-        }
+        const description = players.map((player, index) => `**${index + 1}.** ${player.getName(game)}`).join('\n');
         if (players.length > 0) this.setDescription(description);
-        this.setTitle(message.concat(` [${players.length}/10]`));
-        this.setColor("#2f3136");
+        if (capacity > 1) this.setTitle(message.concat(` [${players.length}/${capacity}]`));
+        else this.setTitle(message);
+        this.setColor(color);
     }
 }

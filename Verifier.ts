@@ -6,7 +6,6 @@ import {Student} from "./Student";
 
 export class Verifier {
     private static readonly timer = 870000;
-    private static readonly regex = new RegExp(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
     private static timeouts: Map<string, Timeout> = new Map();
 
     public static insert(id: string, interaction: ModalSubmitInteraction) {

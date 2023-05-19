@@ -1,6 +1,5 @@
 import {ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder} from "discord.js";
 import {Command} from "../../../Command";
-import {CSMemers} from "../cs-memers";
 import * as fs from "fs";
 
 export const BlacklistCommand =  new Command(new SlashCommandBuilder()
@@ -26,7 +25,8 @@ export const BlacklistCommand =  new Command(new SlashCommandBuilder()
             .setRequired(true)
         ),
     async function execute(interaction: ChatInputCommandInteraction) {
-        const member = await CSMemers.guild.members.fetch(interaction.options.getUser("target").id);
+
+        const member = await interaction.guild.members.fetch(interaction.options.getUser("target").id);
         const action = interaction.options.getString("action") == "add"; // True: Add, False: Remove
         const role = interaction.options.getRole("role");
         let list = JSON.parse(fs.readFileSync("./blacklist.json").toString());

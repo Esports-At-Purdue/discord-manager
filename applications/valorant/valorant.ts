@@ -1,20 +1,20 @@
 import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
-import {Events, Interaction, TextBasedChannel} from "discord.js";
+import {Events, Interaction, TextChannel} from "discord.js";
 import {ValorantApp} from "./ValorantApp";
 import {Database} from "../../Database";
 import {Player} from "../../Player";
 import {GameType} from "../../Game";
 import {Student} from "../../Student";
-import {Router} from "express";
+import {Router} from "../../Router";
 
 SourceMaps.install();
 
-export const Valorant = new ValorantApp();
+const Valorant = new ValorantApp();
 
 Valorant.client.login(config.token).then(() => {
     Valorant.load(config.token, config.guild.id, config.guild.channels.logs).then(async () => {
-        const channel = await Valorant.guild.channels.fetch(config.guild.channels.queue) as TextBasedChannel;
+        const channel = await Valorant.guild.channels.fetch(config.guild.channels.queue) as TextChannel;
         await Valorant.queue.load(channel).catch();
         await Database.updateRankings(GameType.Valorant, Valorant);
     });

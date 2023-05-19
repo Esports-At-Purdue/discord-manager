@@ -1,27 +1,31 @@
-import {Database} from "./Database";
-import {Request, Response} from "express";
-import * as express from "express";
 import * as fs from "fs";
 import * as http from "http";
-import * as config from "./config.json";
-import {Student} from "./Student";
-import {Verifier} from "./Verifier";
-import {Player} from "./Player";
-import {GameType} from "./Game";
-import {Router} from "./Router";
+import * as express from "express";
+import * as config from "../../config.json";
+import {Request, Response} from "express";
+import {Database} from "../../Database";
+import {Student} from "../../Student";
+import {Verifier} from "../../Verifier";
+import {Player} from "../../Player";
+import {GameType} from "../../Game";
+import {Router} from "../../Router";
 
 Database.load().then(async () => {
     const app = express();
     app.use("/students", StudentRouter);
     app.use("/players", PlayerRouter);
+    app.use("/wallyball", WallyballRouter);
     app.listen(1560);
 })
 
 const StudentRouter = express.Router();
 const PlayerRouter = express.Router();
+const WallyballRouter = express.Router();
 
 StudentRouter.use(express.json());
 PlayerRouter.use(express.json());
+WallyballRouter.use(express.json());
+
 
 /*
     Student Router
@@ -109,8 +113,8 @@ StudentRouter.get("/verify/:hash", async (req: Request, res: Response) => {
 
         for (const port of Router.ports.values()) {
             const options = {host: "localhost", port: port, path: "/activate/" + id}
-            const request = http.request(options, function(request) {});
-            request.on('error', function(error) {});
+            const request = http.request(options, () => {});
+            request.on('error', () => {});
             request.end();
         }
 
@@ -143,37 +147,6 @@ StudentRouter.get("/:id", async (req: Request, res: Response) => {
     }
 });
 
-/*
-StudentRouter.post("/", async (req: Request, res: Response) => {
-    try {
-        const student = Student.fromObject(req.body);
-        const result = await student.save();
-
-        result
-            ? res.status(201).send(`Successfully created a new student with id ${result.id}`)
-            : res.status(500).send("Failed to create a new student.");
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message);
-    }
-});
-
-StudentRouter.put("/:id", async (req: Request, res: Response) => {
-    const id = req?.params?.id;
-
-    try {
-        const student = Student.fromObject(req.body);
-        const result = await student.save();
-
-        result
-            ? res.status(200).send(`Successfully updated student with id ${id}`)
-            : res.status(304).send(`student with id: ${id} not updated`);
-    } catch (error) {
-        console.error(error.message);
-        res.status(400).send(error.message);
-    }
-});
- */
 
 /*
     Player Router
@@ -189,7 +162,6 @@ PlayerRouter.get("/", async (req: Request, res: Response) => {
 
         const tableRows = players.map(player => `
             <tr>
-                <td>${player.getName(GameType.Wallyball)}</td>
                 <td>${player.username}</td>
                 <td style="text-align: left;">${player.getElo(GameType.CSGO)}</td>
                 <td style="text-align: left;">${player.getElo(GameType.Siege)}</td>
@@ -205,7 +177,6 @@ PlayerRouter.get("/", async (req: Request, res: Response) => {
             <table style="text-align: left;">
                 <thead>
                     <tr>
-                        <th>Name</th>
                         <th>Username</th>
                         <th>CSGO Elo</th>
                         <th>Siege Elo</th>
@@ -247,34 +218,70 @@ PlayerRouter.get("/:id", async (req: Request, res: Response) => {
     }
 });
 
+
 /*
-PlayerRouter.post("/", async (req: Request, res: Response) => {
-    try {
-        const player = Player.fromObject(req.body);
-        const result = await player.save();
-
-        result
-            ? res.status(201).send(`Successfully created a new player with id ${result.id}`)
-            : res.status(500).send("Failed to create a new player.");
-    } catch (error) {
-        console.error(error);
-        res.status(400).send(error.message);
-    }
-});
-
-PlayerRouter.put("/:id", async (req: Request, res: Response) => {
-    const id = req?.params?.id;
-
-    try {
-        const player = Player.fromObject(req.body);
-        const result = await player.save();
-
-        result
-            ? res.status(200).send(`Successfully updated player with id ${id}`)
-            : res.status(304).send(`Player with id: ${id} not updated`);
-    } catch (error) {
-        console.error(error.message);
-        res.status(400).send(error.message);
-    }
-});
+    Wallyball Router
  */
+
+WallyballRouter.get("/", async (req: Request, res: Response) => {
+    try {
+
+        const documents = await Database.players.find({}).toArray();
+        const players = documents
+            .map(document => Player.fromObject(document))
+            .filter(player => player.getWins(GameType.Wallyball) + player.getLosses(GameType.Wallyball) > 0)
+            .sort((a, b) => a.getRank(GameType.Wallyball) - b.getRank(GameType.Wallyball));
+
+        const tableRows = players.map(player => `
+            <tr>
+                <td>${player.getName(GameType.Wallyball)}</td>
+                <td style="text-align: left;">${getOrdinalSuffix(player.getRank(GameType.Wallyball))}</td>
+                <td style="text-align: left;">${player.getElo(GameType.Wallyball)}</td>
+                <td style="text-align: left;">${player.getWins(GameType.Wallyball)}</td>
+                <td style="text-align: left;">${player.getLosses(GameType.Wallyball)}</td>
+                <td style="text-align: left;">${player.getPoints(GameType.Wallyball)}</td>
+                <!-- Add more columns as needed -->
+            </tr>
+        `);
+
+        // HTML template for the table
+        const tableHTML = `
+            <table style="text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Rank</th>
+                        <th>Elo</th>
+                        <th>Wins</th>
+                        <th>Losses</th>
+                        <th>Points</th>
+                        <!-- Add more column headers as needed -->
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableRows.join('')}
+                </tbody>
+            </table>
+        `;
+
+        res.status(200).send(tableHTML);
+
+    } catch (error) {
+        res.status(500).send(error.message);
+    }
+});
+
+function getOrdinalSuffix(i: number): string {
+    const j = i % 10;
+    const k = i % 100;
+
+    if (j === 1 && k !== 11) {
+        return i + "st";
+    } else if (j === 2 && k !== 12) {
+        return i + "nd";
+    } else if (j === 3 && k !== 13) {
+        return i + "rd";
+    } else {
+        return i + "th";
+    }
+}

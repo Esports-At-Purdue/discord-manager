@@ -1,13 +1,13 @@
-import {SelectMenuBuilder} from "discord.js";
+import {StringSelectMenuBuilder} from "discord.js";
 import * as config from "../config.json";
 
-export class GamesSelectMenus extends Array<SelectMenuBuilder> {
+export class GamesSelectMenus extends Array<StringSelectMenuBuilder> {
     constructor() {
         super();
         const games = sortGames(config.guild.roles.games);
 
         for (let i = 0; i < Math.ceil(games.length / 25); i++) {
-            const selectMenu = new SelectMenuBuilder()
+            const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId(`select_${i}`)
                 .setPlaceholder("Select your favorite games!");
 

@@ -7,7 +7,6 @@ import {
     MessageReplyOptions,
     SlashCommandBuilder
 } from "discord.js";
-import {Valorant} from "../valorant";
 
 export const SetupCommand = new Command(
     new SlashCommandBuilder()
@@ -125,7 +124,7 @@ function buildWelcomeMenu(): MessageReplyOptions {
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(config.guild.roles.valorant)
-                .setLabel(`Access ${Valorant.guild.name}!`)
+                .setLabel(`Access Valorant at Purdue!`)
                 .setStyle(ButtonStyle.Success)
                 .setEmoji(config.guild.emotes.logo)
         )

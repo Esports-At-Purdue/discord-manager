@@ -11,7 +11,7 @@ const requiredFiles = [
 
 export class MathApp extends Application {
     public constructor() {
-        super("math");
+        super("math", null);
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

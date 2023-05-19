@@ -9,6 +9,8 @@ export class CommandRegister extends Map<string, Command | GlobalCommand>{
 
     public constructor() {
         super();
+        for (const command of CommandRegister.GlobalCommands)
+            this.registerCommand(command);
     }
 
     public static GlobalCommands: GlobalCommand[] = [

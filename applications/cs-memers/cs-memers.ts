@@ -18,7 +18,7 @@ import {Router} from "../../Router";
 
 SourceMaps.install();
 
-export const CSMemers = new CSMemersApp();
+const CSMemers = new CSMemersApp();
 
 CSMemers.client.login(config.token).then(async () => {
    await CSMemers.load(config.token, config.guild.id, config.guild.channels.logs);
@@ -191,7 +191,7 @@ function reddit() {
    const seconds = now.getSeconds();
    const delay = hour - (minutes * 60 * 1000) - (seconds * 1000);
    setTimeout(() => {
-      Reddit.parse().catch();
+      Reddit.parse(CSMemers).catch();
       reddit();
    }, delay);
 }

@@ -22,6 +22,7 @@ import {Student} from "./Student";
 import {PurdueModal} from "./modals/Purdue.Modal";
 import {WallyballModal} from "./applications/wallyball/modals/Wallyball.Modal";
 import {Router} from "./Router";
+import {QueueEmbed} from "./embeds/Queue.Embed";
 
 const options = {
     intents: [
@@ -41,13 +42,13 @@ export class Application {
     public client: Client;
     public guild: Guild;
     public logger: Logger;
+    public game: GameType;
     public commands: CommandRegister;
 
-    public constructor(name: string) {
+    public constructor(name: string, game: GameType) {
         this.name = name;
+        this.game = game;
         this.client = new Client(options);
-        this.commands = new CommandRegister();
-        for (const globalCommand of CommandRegister.GlobalCommands) this.commands.registerCommand(globalCommand);
     }
 
     public async load(token: string, guildId: string, logChannelId: string) {
@@ -95,9 +96,10 @@ export class Application {
 
     public async handleLeaderboardButton(interaction: ButtonInteraction, game: GameType, pageNumber: number) {
         await interaction.deferUpdate();
-        const maxPages = Math.ceil(await Database.players.countDocuments() / 5);
-        const actionRow = new LeaderboardRow(pageNumber, maxPages);
-        const filePath = `./media/${game}/leaderboards/${pageNumber}.png`;
+        const totalPlayers = await Database.getTotalPlayers(game);
+        const maxPages = Math.ceil(totalPlayers / 5);
+        const actionRow = new LeaderboardRow(game, pageNumber, maxPages);
+        const filePath = `../../media/leaderboards/${game}/${pageNumber}.png`;
         const image = new AttachmentBuilder(filePath);
         interaction.editReply({content: null, files: [image], components: [actionRow]}).catch();
         return;
@@ -109,17 +111,24 @@ export class Application {
             interaction.showModal(modal).catch();
             return;
         }
+
+        await interaction.deferUpdate();
+
         if (queue.queue.has(player.id)) {
-            interaction.reply({content: `You are already in the queue.`, ephemeral: true}).catch();
+            interaction.followUp({content: `You are already in the queue.`, ephemeral: true}).catch();
             return;
         }
 
+        //interaction.reply({content: `Success`, ephemeral: true}).catch();
         queue.join(player, interaction);
         if (queue.queue.size != queue.capacity) return;
-        queue.update(`A new Game has began!`, Colors.Gold).catch();
+        const embed = new QueueEmbed(`A new Game has begun!`, await queue.getPlayers(), queue.capacity, queue.game, Colors.Gold);
+        interaction.channel.send({embeds: [embed]}).catch();
         for (const entry of queue.queue) clearTimeout(entry[1]);
-        // ToDo New Game
         queue.queue = new Map();
+        queue.update(`A new Queue has started.`, Colors.Aqua).catch();
+
+        // ToDo New Game
     }
 
     public async handleQueueLeaveButton(interaction: ButtonInteraction, player: Player, queue: Queue) {
@@ -128,10 +137,14 @@ export class Application {
             interaction.showModal(modal).catch();
             return;
         }
+
+        await interaction.deferUpdate();
+
         if (!queue.queue.has(player.id)) {
-            interaction.reply({content: `You are not in the queue.`, ephemeral: true}).catch();
+            interaction.followUp({content: `You are not in the queue.`, ephemeral: true}).catch();
             return;
         }
+
         queue.leave(player);
     }
 
@@ -141,6 +154,9 @@ export class Application {
             interaction.showModal(modal).catch();
             return;
         }
+
+        await interaction.deferUpdate();
+
         queue.bump(player);
     }
 
@@ -235,7 +251,7 @@ export class Application {
         response.sendStatus(200);
     }
 
-    status(type, name: string): void {
+    public status(type, name: string): void {
         this.client.user.setActivity({name: name, type: type});
     }
 }

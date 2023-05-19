@@ -11,7 +11,7 @@ import {GameType} from "../../Game";
 
 SourceMaps.install();
 
-export const Wallyball = new WallyballApp();
+const Wallyball = new WallyballApp();
 
 Wallyball.client.login(config.token).then(() => {
     Wallyball.load(config.token, config.guild.id, config.guild.channels.logs).then(async () => {
@@ -41,15 +41,16 @@ Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         try {
 
             if (interaction.customId.startsWith("page")) {
-                const game = interaction.customId.split("-")[1];
-                const pageNumber = Number.parseInt(interaction.customId.split("-")[2]);
+                const game = interaction.customId.split("-")[2];
+                const pageNumber = Number.parseInt(interaction.customId.split("-")[1]);
                 Wallyball.handleLeaderboardButton(interaction, game as GameType, pageNumber).catch();
                 return;
             }
 
         } catch (error) {
             Wallyball.logger.error(`Button by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
 
@@ -64,7 +65,8 @@ Wallyball.client.on(Events.InteractionCreate, async (interaction: Interaction) =
             }
         } catch (error) {
             Wallyball.logger.error(`Modal by ${user.username} errored`, error);
-            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
     }
 });

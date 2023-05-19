@@ -1,6 +1,5 @@
 import {Command} from "../../../Command";
 import {ChatInputCommandInteraction, GuildMember, PermissionsBitField, Role, SlashCommandBuilder} from "discord.js";
-import {CSMemers} from "../cs-memers";
 
 export const RoleCommand = new Command(
     new SlashCommandBuilder()
@@ -42,7 +41,7 @@ export const RoleCommand = new Command(
         const subcommand = interaction.options.getSubcommand();
         const role = interaction.options.getRole("role") as Role;
         const highestRolePosition = (interaction.member as GuildMember).roles.highest.position;
-        const member = await CSMemers.guild.members.fetch(interaction.options.getUser("target"));
+        const member = await interaction.guild.members.fetch(interaction.options.getUser("target"));
 
         if (!interaction.memberPermissions.has(PermissionsBitField.Flags.ViewAuditLog)) {
             interaction.reply({content: `You are not permitted to use this command.`, ephemeral: true}).catch();

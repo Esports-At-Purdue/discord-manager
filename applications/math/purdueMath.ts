@@ -8,7 +8,7 @@ import {Verifier} from "../../Verifier";
 
 SourceMaps.install();
 
-export const PurdueMath = new MathApp();
+const PurdueMath = new MathApp();
 
 PurdueMath.client.login(config.token).then(async () => {
     await PurdueMath.load(config.token, config.guild.id, config.guild.channels.logs);
@@ -43,14 +43,16 @@ PurdueMath.client.on(Events.InteractionCreate, async (interaction: Interaction) 
                 return;
             }
 
+            if (role.id)
+
             if (member.roles.cache.has(role.id)) {
-                member.roles.remove(role.id).catch();
+                await member.roles.remove(role.id);
                 interaction.reply({content: `You removed **<@&${role.id}>**.`, ephemeral: true});
                 if (!hasMajorRole(member)) member.roles.add(config.guild.roles.other).catch();
                 return;
             } else {
-                member.roles.add(role.id).catch();
-                interaction.reply({content: `You applied **<@&${role.id}>**.`, ephemeral: true});
+                await member.roles.add(role.id);
+                await interaction.reply({content: `You applied **<@&${role.id}>**.`, ephemeral: true});
                 if (hasMajorRole(member)) member.roles.remove(config.guild.roles.other).catch();
                 if (role.id == config.guild.roles.ta) interaction.followUp({content: "This role is for UTAs and GTAs. Please de-equip if it if you are not a Math UTA or GTA.", ephemeral: true})
                 return;

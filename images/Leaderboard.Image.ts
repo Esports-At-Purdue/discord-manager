@@ -10,7 +10,7 @@ export class LeaderboardImage {
 
     public static width = 2560;
     public static height = 1440;
-    public static path = "./media/Leaderboard.png";
+    public static path = "../../media/Leaderboard.png";
 
     constructor(canvas: Canvas) {
         this.canvas = canvas;
@@ -27,6 +27,7 @@ export class LeaderboardImage {
 
         for (let i = 0; i < 5; i++) {
             const player = players[i];
+            if (!player) continue;
             const user = await application.client.users.fetch(player.id);
             const avatarUrl = user.displayAvatarURL({extension: "png", size: 256});
             const avatar = await cnv.loadImage(avatarUrl);

@@ -10,12 +10,12 @@ import {Router} from "../../Router";
 
 SourceMaps.install();
 
-export const CSGO = new CSGOApp();
+const CSGO = new CSGOApp();
 
 CSGO.client.login(config.token).then(() => {
     CSGO.load(config.token, config.guild.id, config.guild.channels.logs).then(async () => {
-        const channel = await CSGO.guild.channels.fetch(config.guild.channels.queue) as TextBasedChannel;
-        await CSGO.queue.load(channel).catch();
+        const queueChannel = await CSGO.guild.channels.fetch(config.guild.channels.queue) as TextBasedChannel;
+        await CSGO.queue.load(queueChannel).catch();
         await Database.updateRankings(GameType.CSGO, CSGO);
     });
 });

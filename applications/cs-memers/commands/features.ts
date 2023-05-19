@@ -1,6 +1,5 @@
 import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
 import {Command} from "../../../Command";
-import {CSMemers} from "../cs-memers";
 import * as fs from "fs";
 
 export const FeaturesCommand =  new Command(new SlashCommandBuilder()
@@ -25,7 +24,7 @@ export const FeaturesCommand =  new Command(new SlashCommandBuilder()
         const urls = [];
         let totalReactions = 0;
         for (const reaction of reactions) {
-            urls.push(`https://discord.com/channels/${CSMemers.guild.id}/${reaction["channelId"]}/${reaction["messageId"]}`);
+            urls.push(`https://discord.com/channels/${interaction.guild.id}/${reaction["channelId"]}/${reaction["messageId"]}`);
             totalReactions += 1;
         }
 

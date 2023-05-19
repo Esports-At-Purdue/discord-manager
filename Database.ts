@@ -38,54 +38,60 @@ export class Database {
         });
     }
 
+    public static async getPlayersThatHavePlayedGame(game: GameType): Promise<Player[]> {
+        const documents = await Database.players
+            .find({
+                $or: [
+                    { [`stats.${game}.wins`]: { $gt: 0 } },
+                    { [`stats.${game}.losses`]: { $gt: 0 } }
+                ]
+            })
+            .map(
+                document => Player.fromObject(document)
+            );
+        return await documents.toArray();
+    }
+
+    public static async getPlayersThatHavePlayedGameSorted(game: GameType): Promise<Player[]> {
+        const documents = await Database.players
+            .find({
+                $or: [
+                    {[`stats.${game}.wins`]: {$gt: 0}},
+                    {[`stats.${game}.losses`]: {$gt: 0}}
+                ]
+            })
+            .sort({
+                [`stats.${game}.elo`] : -1,
+                [`stats.${game}.wins`] : -1,
+                [`stats.${game}.points`] : -1
+            })
+            .map(
+                document => Player.fromObject(document)
+            );
+
+        return await documents.toArray();
+    }
+
+    public static async getTotalPlayers(game: GameType): Promise<number> {
+        const players = await Database.getPlayersThatHavePlayedGame(game);
+        return players.length;
+    }
+
     public static async updateRankings(game: GameType, application: Application) {
-        const players = await Database.players.find({});
-        let sortedPlayers;
+        const players = await Database.getPlayersThatHavePlayedGameSorted(game);
 
-        switch (game) {
-            case GameType.CSGO: sortedPlayers = await players.sort({
-                "stats.csgo.elo": -1,
-                "stats.csgo.wins": 1,
-                "stats.csgo.points": 1
-            }).toArray();
-                break;
-            case GameType.Siege: sortedPlayers = await players.sort({
-                "stats.siege.elo": -1,
-                "stats.siege.wins": 1,
-                "stats.siege.points": 1
-            }).toArray();
-                break;
-            case GameType.Overwatch: sortedPlayers = await players.sort({
-                "stats.overwatch.elo": -1,
-                "stats.overwatch.wins": 1,
-                "stats.overwatch.points": 1
-            }).toArray();
-                break;
-            case GameType.Valorant: sortedPlayers = await players.sort({
-                "stats.valorant.elo": -1,
-                "stats.valorant.wins": 1,
-                "stats.valorant.points": 1
-            }).toArray();
-                break;
-            case GameType.Wallyball: sortedPlayers = await players.sort({
-                "stats.wallyball.elo": -1,
-                "stats.wallyball.wins": 1,
-                "stats.wallyball.points": 1
-            }).toArray();
-        }
+        const pages = Math.ceil(players.length / 5);
 
-        const pages = Math.ceil(sortedPlayers.length / 5);
-
-        for (let i = 0; i < sortedPlayers.length; i++) {
-            const player = Player.fromObject(sortedPlayers[i]);
+        for (let i = 0; i < players.length; i++) {
+            const player = Player.fromObject(players[i]);
             player.setRank(game, i + 1);
             player.save().catch();
         }
 
         for (let i = 1; i <= pages; i++) {
-            const leaderboardPlayers = sortedPlayers.slice(5 * (i - 1),5 * i);
+            const leaderboardPlayers = players.slice(5 * (i - 1),5 * i);
             const leaderboard = await LeaderboardImage.build(leaderboardPlayers, game, application);
-            const writeStream = fs.createWriteStream(`./media/${game}/leaderboards/${i}.png`);
+            const writeStream = fs.createWriteStream(`../../media/leaderboards/${game}/${i}.png`);
             const pngStream = leaderboard.canvas.createPNGStream();
             pngStream.pipe(writeStream);
         }

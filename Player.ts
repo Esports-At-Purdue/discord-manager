@@ -21,9 +21,8 @@ export class Player implements Saveable {
     public getName(game: GameType) {
         const firstName = this.firstName ?? "Unknown";
         const lastName = this.lastName ?? "Unknown";
-        const username = this.username ?? "Unknown";
         if (game == GameType.Wallyball) return `${firstName} ${lastName.charAt(0)}`;
-        return username;
+        return this.username ?? "Unknown";
     }
 
     public getElo(game: GameType) {
@@ -110,6 +109,12 @@ export class Player implements Saveable {
         const gamesWon = this.getWins(game);
         const totalGames = gamesWon + this.getLosses(game);
         return 100 * gamesWon / totalGames;
+    }
+
+    public getTotalGames(game: GameType): number {
+        const wins = this.getWins(game);
+        const losses = this.getLosses(game);
+        return wins + losses;
     }
 
     public static fromObject(object): Player {

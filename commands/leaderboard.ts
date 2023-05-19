@@ -12,7 +12,7 @@ export const leaderboardCommand = new GlobalCommand(
         .addStringOption((string) => string
             .setName("game")
             .setDescription("The game for which the leaderboard is associated")
-            .setRequired(true)
+            .setRequired(false)
             .setChoices(
                 {name: "CSGO", value: "csgo"},
                 {name: "Siege", value: "siege"},
@@ -30,14 +30,19 @@ export const leaderboardCommand = new GlobalCommand(
     ,
     async function execute(interaction: ChatInputCommandInteraction, application: Application) {
         await interaction.deferReply();
+        const game = interaction.options.getString("game") as GameType ?? application.game ?? GameType.CSGO;
+        const totalPlayers = await Database.getTotalPlayers(game);
+        const maxPages = Math.ceil(totalPlayers / 5);
+        const page = Math.min(interaction.options.getInteger('page') ?? 1, maxPages);
+        const filePath = `../../media/leaderboards/${game}/${page}.png`;
 
-        const maxPages = Math.ceil(await Database.players.countDocuments() / 5);
-        const page =  Math.min(interaction.options.getInteger('page') ?? 1, maxPages);
-        const game = interaction.options.getString("game") as GameType;
-        const filePath = `./media/${game}/leaderboards/${page}.png`;
-        const attachment = new AttachmentBuilder(filePath);
-        const actionRow = new LeaderboardRow(page, maxPages);
-
-        interaction.editReply({files: [attachment], components: [actionRow]}).catch();
+        try {
+            const attachment = new AttachmentBuilder(filePath);
+            const actionRow = new LeaderboardRow(game, page, maxPages);
+            await interaction.editReply({files: [attachment], components: [actionRow]});
+        } catch (error) {
+            const reply = await interaction.editReply({content: `Sorry, the leaderboard in not currently available`});
+            setTimeout(() => reply.delete(), 5000);
+        }
     }
-)
+);

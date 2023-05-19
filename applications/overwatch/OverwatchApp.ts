@@ -2,6 +2,7 @@ import {Application} from "../../Application";
 import {ActivityType} from "discord.js";
 import {Queue} from "../../Queue";
 import {GameType} from "../../Game";
+import {SetupCommand} from "./commands/setup";
 import {CommandRegister} from "../../CommandRegister";
 
 const requiredFiles = [
@@ -13,9 +14,10 @@ export class OverwatchApp extends Application {
     public queue: Queue;
 
     constructor() {
-        super("overwatch");
-        this.queue = new Queue(3600000, 10, GameType.Overwatch, new Map());
-        this.commands = new CommandRegister();
+        super("overwatch", GameType.Overwatch);
+        this.queue = new Queue(3600000, 10, GameType.Overwatch, new Map(), true);
+        this.commands = new CommandRegister()
+            .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);
     }
 }

@@ -12,13 +12,14 @@ import {PuggApp} from "./PuggApp";
 import {Student} from "../../Student";
 import {Ticket} from "../../Ticket";
 import {Router} from "../../Router";
+import {Database} from "../../Database";
 
 SourceMaps.install();
 
-export const Pugg = new PuggApp();
+const Pugg = new PuggApp();
 
-Pugg.client.login(config.token).then(() => {
-    Pugg.load(config.token, config.guild.id, config.guild.channels.logs).catch();
+Pugg.client.login(config.token).then(async () => {
+    await Pugg.load(config.token, config.guild.id, config.guild.channels.logs).catch();
 });
 
 Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {

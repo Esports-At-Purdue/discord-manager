@@ -2,8 +2,8 @@ import {Application} from "../../Application";
 import {Queue} from "../../Queue";
 import {GameType} from "../../Game";
 import {ActivityType} from "discord.js";
-import {CommandRegister} from "../../CommandRegister";
 import {SetupCommand} from "./commands/setup";
+import {CommandRegister} from "../../CommandRegister";
 
 const requiredFiles = [
     {name: "queue.json", default: {id: null}},
@@ -15,8 +15,8 @@ export class ValorantApp extends Application {
     public queue: Queue;
 
     constructor() {
-        super("valorant");
-        this.queue = new Queue(3600000, 10, GameType.Valorant, new Map());
+        super("valorant", GameType.Valorant);
+        this.queue = new Queue(3600000, 10, GameType.Valorant, new Map(), true);
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

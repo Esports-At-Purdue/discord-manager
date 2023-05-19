@@ -1,7 +1,8 @@
 import {ActionRowBuilder, ButtonBuilder, ButtonStyle} from "discord.js";
+import {GameType} from "../Game";
 
 export class LeaderboardRow extends ActionRowBuilder<ButtonBuilder> {
-    constructor(page: number, totalPages: number) {
+    constructor(game: GameType, page: number, totalPages: number) {
         super();
         if (page == 1) {
             this.addComponents(
@@ -12,7 +13,7 @@ export class LeaderboardRow extends ActionRowBuilder<ButtonBuilder> {
                     .setDisabled(true),
                 new ButtonBuilder()
                     .setEmoji("👉")
-                    .setCustomId("page-2")
+                    .setCustomId(`page-2-${game}`)
                     .setStyle(ButtonStyle.Secondary)
             )
         }
@@ -20,7 +21,7 @@ export class LeaderboardRow extends ActionRowBuilder<ButtonBuilder> {
             this.addComponents(
                 new ButtonBuilder()
                     .setEmoji("👈")
-                    .setCustomId(`page-${totalPages - 1}`)
+                    .setCustomId(`page-${totalPages - 1}-${game}`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setEmoji("👉")
@@ -33,11 +34,11 @@ export class LeaderboardRow extends ActionRowBuilder<ButtonBuilder> {
             this.addComponents(
                 new ButtonBuilder()
                     .setEmoji("👈")
-                    .setCustomId(`page-${page - 1}`)
+                    .setCustomId(`page-${page - 1}-${game}`)
                     .setStyle(ButtonStyle.Secondary),
                 new ButtonBuilder()
                     .setEmoji("👉")
-                    .setCustomId(`page-${page + 1}`)
+                    .setCustomId(`page-${page + 1}-${game}`)
                     .setStyle(ButtonStyle.Secondary)
             )
         }

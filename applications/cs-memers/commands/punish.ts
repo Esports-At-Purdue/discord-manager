@@ -1,6 +1,5 @@
 import {ChatInputCommandInteraction, PermissionsBitField, SlashCommandBuilder} from "discord.js";
 import {Command} from "../../../Command";
-import {CSMemers} from "../cs-memers";
 
 export const PunishCommand = new Command(
     new SlashCommandBuilder()
@@ -34,7 +33,7 @@ export const PunishCommand = new Command(
             return;
         }
 
-        const member = await CSMemers.guild.members.fetch(interaction.options.getUser("target").id);
+        const member = await interaction.guild.members.fetch(interaction.options.getUser("target").id);
         const magnitude = interaction.options.getInteger("length");
         const unit = interaction.options.getString("unit");
         const milliseconds = magnitude * (unitToMilliseconds[unit] || 0);

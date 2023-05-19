@@ -9,6 +9,8 @@ import {PunishCommand} from "./commands/punish";
 import {RoleCommand} from "./commands/role";
 import {Reaction} from "./Reaction";
 import * as fs from "fs";
+import {CommandRegister} from "../../CommandRegister";
+import {GameType} from "../../Game";
 
 const requiredFiles = [
     { name: "status.json", default: {name: "Hello, World!", type: 0} },
@@ -22,8 +24,8 @@ const requiredFiles = [
 export class CSMemersApp extends Application {
 
     public constructor() {
-        super("cs-memers");
-        this.commands
+        super("cs-memers", null);
+        this.commands = new CommandRegister()
             .registerCommand(BlacklistCommand)
             .registerCommand(DeleteCommand)
             .registerCommand(FeaturesCommand)

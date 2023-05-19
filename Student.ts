@@ -35,4 +35,9 @@ export class Student implements Saveable {
         if (!document) return null;
         return Student.fromObject(document);
     }
+
+    public async delete() {
+        const query: Filter<any> = {id: this.id};
+        await Database.students.deleteOne(query);
+    }
 }

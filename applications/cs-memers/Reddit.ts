@@ -1,8 +1,9 @@
 import {RedditEmbed} from "./embeds/Reddit.Embed";
+import {Application} from "../../Application";
 import {TextBasedChannel} from "discord.js";
-import {CSMemers} from "./cs-memers";
 import * as config from "./config.json";
 import * as fs from "fs";
+
 
 export class Reddit {
 
@@ -20,11 +21,11 @@ export class Reddit {
         fs.writeFileSync(Reddit.readFilePath, JSON.stringify(Reddit.parsedIds, null, 2));
     }
 
-    public static async parse(): Promise<void> {
+    public static async parse(application: Application): Promise<void> {
         Reddit.loadFromFile();
 
         const channels = [
-            await CSMemers.client.channels.fetch(config.guild.channels.reddit) as TextBasedChannel
+            await application.client.channels.fetch(config.guild.channels.reddit) as TextBasedChannel
         ] as TextBasedChannel[];
 
         const entries: Entry[] = [];
