@@ -10,7 +10,9 @@ import {RoleCommand} from "./commands/role";
 import {Reaction} from "./Reaction";
 import * as fs from "fs";
 import {CommandRegister} from "../../CommandRegister";
-import {GameType} from "../../Game";
+import {BruvLogCommand} from "./commands/bruvlog";
+import {BruvgrepCommand} from "./commands/bruvgrep";
+import {Message} from "./Message";
 
 const requiredFiles = [
     { name: "status.json", default: {name: "Hello, World!", type: 0} },
@@ -33,15 +35,9 @@ export class CSMemersApp extends Application {
             .registerCommand(RoleCommand)
             .registerCommand(SayCommand)
             .registerCommand(RegisterCommand)
+            .registerCommand(BruvLogCommand)
+            .registerCommand(BruvgrepCommand)
         this.ensureDataFilesExist(requiredFiles);
-    }
-
-    public readMessagesFile(): string[] {
-        return JSON.parse(fs.readFileSync("./bruv.json").toString());
-    }
-
-    public writeMessagesFile(messages: string[]) {
-        fs.writeFileSync("./bruv.json", JSON.stringify(messages, null, 2));
     }
 
     public readReactionsFile(): Map<string, Reaction[]> {

@@ -55,7 +55,7 @@ export class Queue {
     }
 
     public bump(player: Player) {
-        if (this.verbose) this.update(`${player.getName(this.game)} bumped the queue`, Colors.Aqua).catch();
+        if (this.verbose) this.update(`The current queue:`, Colors.Aqua).catch();
     }
 
     public static async timeout(queue: Queue, player: Player, interaction: ButtonInteraction | ChatInputCommandInteraction) {

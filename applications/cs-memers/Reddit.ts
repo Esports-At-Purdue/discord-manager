@@ -81,6 +81,7 @@ class Entry {
     }
 }
 
+/*
 class NewEntry {
     public id: string;
     public title: string;
@@ -105,3 +106,4 @@ class NewEntry {
         return new NewEntry(id, title, link, new Date(date), score, body, images);
     }
 }
+ */

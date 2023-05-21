@@ -243,11 +243,14 @@ export class Application {
         const memberId = request?.params?.id;
         this.guild.members.fetch(memberId).then((member) => {
             if (!member) return;
-            member.roles.add(roleId).catch();
+            if (!member.roles.cache.has(roleId)) {
+                this.logger.info(`Automatic Role Applied: ${member.user.username}`);
+                member.roles.add(roleId).catch();
+            }
             const timeout = Verifier.remove(memberId);
             if (!timeout) return;
             timeout.interaction.followUp({content: `Hey <@${memberId}>, you have successfully been verified. Thank you!`, ephemeral: true}).catch();
-            this.logger.info(`Automatic Role Applied: ${member.user.username}`);
+
         });
         response.sendStatus(200);
     }

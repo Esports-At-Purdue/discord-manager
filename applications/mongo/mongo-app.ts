@@ -105,7 +105,7 @@ StudentRouter.get("/verify/:hash", async (req: Request, res: Response) => {
 
         if (Date.now() - time > 900000 || !time) {
             console.log("Link Is Too Old");
-            const html = fs.readFileSync("./media/verifier/expired.html").toString();
+            const html = fs.readFileSync("../../media/verifier/expired.html").toString();
             res.status(400).send(html);
             return;
         }
@@ -114,14 +114,14 @@ StudentRouter.get("/verify/:hash", async (req: Request, res: Response) => {
 
         if (!student) {
             console.log("Student Doesn't Exist");
-            const html = fs.readFileSync("./media/verifier/error.html").toString();
+            const html = fs.readFileSync("../../media/verifier/error.html").toString();
             res.status(404).send(html);
             return;
         }
 
         student.verified = true;
         student.save().catch();
-        const html = fs.readFileSync("./media/verifier/success.html").toString();
+        const html = fs.readFileSync("../../media/verifier/success.html").toString();
         res.status(200).send(html);
 
         for (const port of Router.ports.values()) {

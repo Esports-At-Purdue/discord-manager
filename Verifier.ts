@@ -81,10 +81,9 @@ export class Verifier {
 
     public static decrypt(hash: {iv: string, content: string}) {
         const decipher = crypto.createDecipheriv("aes-256-ctr", config.key, Buffer.from(hash.iv, 'hex'));
-
-        const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
-
-        return decrypted.toString();}
+        const bufferList = [decipher.update(Buffer.from(hash.content, "hex")), decipher.final()];
+        const decryptedBuffer = Buffer.concat(bufferList);
+        return decryptedBuffer.toString();}
 }
 
 class Timeout {

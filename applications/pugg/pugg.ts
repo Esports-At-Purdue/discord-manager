@@ -12,7 +12,6 @@ import {PuggApp} from "./PuggApp";
 import {Student} from "../../Student";
 import {Ticket} from "../../Ticket";
 import {Router} from "../../Router";
-import {Database} from "../../Database";
 
 SourceMaps.install();
 

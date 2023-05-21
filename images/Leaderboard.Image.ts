@@ -23,7 +23,7 @@ export class LeaderboardImage {
         const gameLogo = await cnv.loadImage(Utils.getGameLogoPath(game));
 
         Utils.printImage(context, background, 0, 0, canvas.width, canvas.height);
-        Utils.printImage(context, gameLogo, 2420, 40, 100, 100);
+        Utils.printImage(context, gameLogo, 2220, 150, 200, 200);
 
         for (let i = 0; i < 5; i++) {
             const player = players[i];

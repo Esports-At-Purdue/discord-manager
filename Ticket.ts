@@ -76,8 +76,8 @@ export class Ticket implements Saveable {
 }
 
 export enum TicketStatus {
-    Open,
-    Closed
+    Closed,
+    Open
 }
 
 export class TicketMessage {
