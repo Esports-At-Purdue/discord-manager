@@ -2,9 +2,10 @@ import {
     ButtonInteraction,
     ChatInputCommandInteraction,
     ColorResolvable,
-    Colors, Events,
-    Message, MessageCollector,
-    TextBasedChannel
+    Colors,
+    Message,
+    MessageCollector,
+    TextChannel
 } from "discord.js";
 import * as fs from "fs";
 import {QueueEmbed} from "./embeds/Queue.Embed";
@@ -18,22 +19,24 @@ export class Queue {
     public messageLimit: boolean;
     public verbose: boolean;
     public game: GameType;
+    public draft: DraftFormat;
     public queue: Map<string, NodeJS.Timeout>;
-    public channel: TextBasedChannel;
+    public channel: TextChannel;
     public message: Message;
 
-    constructor(timer: number, capacity: number, verbose: boolean, game: GameType, queue: Map<string, NodeJS.Timeout>) {
+    constructor(timer: number, capacity: number, verbose: boolean, game: GameType, draft: DraftFormat, queue: Map<string, NodeJS.Timeout>) {
         this.timer = timer;
         this.capacity = capacity;
         this.game = game;
+        this.draft = draft;
         this.queue = queue;
         this.messageLimit = true;
         this.verbose = verbose;
     }
 
-    public async load(channel: TextBasedChannel) {
+    public async load(channel: TextChannel) {
         this.channel = channel;
-        if (this.verbose) this.update(`A new Queue has started.`, Colors.Aqua).catch();
+        if (this.verbose) await this.update(`A new Queue has started.`, Colors.Aqua);
     }
 
     public async getPlayers(): Promise<Player[]> {
@@ -42,33 +45,35 @@ export class Queue {
         return await Promise.all(playerPromises);
     }
 
-    public join(player: Player, interaction: ButtonInteraction | ChatInputCommandInteraction) {
-        const timeout = global.setTimeout(Queue.timeout, this.timer, this, player, interaction);
-        this.queue.set(player.id, timeout);
-        if (this.verbose) this.update(`${player.getName(this.game)} has joined`, Colors.DarkGreen).catch();
+    public async join(message: string, players: Player[], interaction: ButtonInteraction | ChatInputCommandInteraction) {
+        for (const player of players) {
+            const timeout = global.setTimeout(Queue.timeout, this.timer, this, player, interaction);
+            this.queue.set(player.id, timeout);
+        }
+        if (this.verbose) await this.update(message, Colors.DarkGreen);
     }
 
-    public leave(player: Player) {
-        clearTimeout(this.queue.get(player.id));
-        this.queue.delete(player.id);
-        if (this.verbose) this.update(`${player.getName(this.game)} has left`, Colors.DarkOrange).catch();
+    public async leave(message: string, players: Player[]) {
+        for (const player of players) {
+            clearTimeout(this.queue.get(player.id));
+            this.queue.delete(player.id);
+        }
+        if (this.verbose) await this.update(message, Colors.DarkOrange);
     }
 
-    public bump(player: Player) {
-        if (this.verbose) this.update(`The current queue:`, Colors.Aqua).catch();
+    public async bump(player: Player) {
+        if (this.verbose) await this.update(`The current queue:`, Colors.Aqua);
     }
 
     public static async timeout(queue: Queue, player: Player, interaction: ButtonInteraction | ChatInputCommandInteraction) {
         clearTimeout(queue.queue.get(player.id));
         queue.queue.delete(player.id);
-        if (interaction.isButton()) {
-            const message = await interaction.channel.send({content: `<@${player.id}>, you have been timed out of the queue.`});
-            setTimeout(() => message.delete(), 5 * 60 * 1000);
-        }
+        const message = await interaction.channel.send({content: `<@${player.id}>, you have been timed out of the queue.`});
+        setTimeout(() => message.delete(), 5 * 60 * 1000);
         queue.update(`${player.getName(queue.game)} has been timed out.`, Colors.DarkOrange).catch();
     }
 
-    public static async fetchLastMessage(channel: TextBasedChannel, id: string): Promise<Message> {
+    public static async fetchLastMessage(channel: TextChannel, id: string): Promise<Message> {
         try {
             return await channel.messages.fetch(id);
         } catch {
@@ -90,9 +95,14 @@ export class Queue {
             new MessageCollector(this.channel, {max: 5, filter: filter}).on('end', () => { this.messageLimit = true });
             this.messageLimit = false;
             if (!lastMessage || !lastMessage.deletable) return;
-            lastMessage.delete().catch();
+            await lastMessage.delete();
         } else {
             await lastMessage.edit({embeds: [embed], components: [row]});
         }
     }
+}
+
+export enum DraftFormat {
+    Linear,
+    Auto
 }

@@ -97,8 +97,8 @@ Siege.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 
     if (interaction.isStringSelectMenu()) {
         try {
-
-            await interaction.reply({content: `Content unavailable.`, ephemeral: true});
+            await Siege.handlePlayerPickMenu(interaction);
+            return;
         } catch (error) {
             Siege.logger.error(`Menu by ${user.username} errored`, error);
             if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
@@ -137,6 +137,12 @@ Siege.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 Router.express.get(`/activate/:id`, (request, response) => {
     Siege.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
         Siege.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    Siege.handleUnreachableEmail(request, response).catch(error =>
+        Siege.logger.error("Error handling unreachable email", error)
     );
 });
 

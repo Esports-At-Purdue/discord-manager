@@ -6,6 +6,7 @@ import {PingCommand} from "./commands/ping";
 import {StatusCommand} from "./commands/status";
 import {UsernameCommand} from "./commands/username";
 import {NameCommand} from "./commands/name";
+import {QueueCommand} from "./commands/queue";
 
 export class CommandRegister extends Map<string, Command | GlobalCommand>{
 
@@ -22,7 +23,8 @@ export class CommandRegister extends Map<string, Command | GlobalCommand>{
         PingCommand,
         StatusCommand,
         UsernameCommand,
-        NameCommand
+        NameCommand,
+        QueueCommand
     ];
 
     public registerCommand(command: Command): CommandRegister {

@@ -1,6 +1,6 @@
 import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
-import {Events, Interaction, TextBasedChannel} from "discord.js";
+import {Events, Interaction, TextChannel} from "discord.js";
 import {Database} from "../../Database";
 import {Player} from "../../Player";
 import {GameType} from "../../Game";
@@ -14,8 +14,8 @@ const CSGO = new CSGOApp();
 
 CSGO.client.login(config.token).then(() => {
     CSGO.load(config.token, config.guild.id, config.guild.channels.logs).then(async () => {
-        const queueChannel = await CSGO.guild.channels.fetch(config.guild.channels.queue) as TextBasedChannel;
-        await CSGO.queue.load(queueChannel).catch();
+        const queueChannel = await CSGO.guild.channels.fetch(config.guild.channels.queue) as TextChannel;
+        await CSGO.queue.load(queueChannel);
         await Database.updateRankings(GameType.CSGO, CSGO);
     });
 });
@@ -29,11 +29,11 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         const command = CSGO.commands.get(interaction.commandName);
 
         try {
-            command.execute(interaction, CSGO).catch();
+            await command.execute(interaction, CSGO);
         } catch (error) {
             CSGO.logger.error(`Command by ${user.username} errored`, error);
-            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
-            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) await interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true});
+            else await interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true});
         }
     }
 
@@ -42,22 +42,22 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         try {
 
             if (interaction.customId.startsWith("page")) {
-                CSGO.handleLeaderboardButton(interaction).catch();
+                await CSGO.handleLeaderboardButton(interaction);
                 return;
             }
 
             if (interaction.customId == "join") {
-                CSGO.handleQueueJoinButton(interaction, player, CSGO.queue).catch();
+                await CSGO.handleQueueJoinButton(interaction, player, CSGO.queue);
                 return;
             }
 
             if (interaction.customId == "leave") {
-                CSGO.handleQueueLeaveButton(interaction, player, CSGO.queue).catch();
+                await CSGO.handleQueueLeaveButton(interaction, player, CSGO.queue);
                 return;
             }
 
             if (interaction.customId == "bump") {
-                CSGO.handleQueueBumpButton(interaction, player, CSGO.queue).catch();
+                await CSGO.handleQueueBumpButton(interaction, player, CSGO.queue);
                 return;
             }
 
@@ -65,27 +65,39 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             const member = await CSGO.guild.members.fetch(user.id);
 
             if (role.id == config.guild.roles.purdue) {
-                CSGO.handlePurdueButton(interaction, student, member, role.id).catch();
+                await CSGO.handlePurdueButton(interaction, student, member, role.id);
                 return;
             }
 
             if (role.id == config.guild.roles.tenmans) {
-                CSGO.handlePlayerButton(interaction, player).catch();
-                // No Return
+                if (await CSGO.handlePlayerButton(interaction, player)) return;
             }
 
             if (member.roles.cache.has(role.id)) {
-                member.roles.remove(role.id).catch();
-                interaction.reply({content: `You removed **<@&${role.id}>**.`, ephemeral: true});
+                await member.roles.remove(role.id);
+                await interaction.reply({content: `You removed **<@&${role.id}>**.`, ephemeral: true});
                 return;
             } else {
-                member.roles.add(role.id).catch();
-                interaction.reply({content: `You applied **<@&${role.id}>**.`, ephemeral: true});
+                await member.roles.add(role.id);
+                await interaction.reply({content: `You applied **<@&${role.id}>**.`, ephemeral: true});
                 return;
             }
 
         } catch (error) {
             CSGO.logger.error(`Button by ${user.username} errored`, error);
+            try {
+                if (interaction.replied) await interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true});
+                else await interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true});
+            } catch {}
+        }
+    }
+
+    if (interaction.isStringSelectMenu()) {
+        try {
+            await CSGO.handlePlayerPickMenu(interaction);
+            return;
+        } catch (error) {
+            CSGO.logger.error(`Menu by ${user.username} errored`, error);
             if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
             else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
@@ -98,24 +110,24 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
             const name = interaction.customId;
 
             if (name == "register") {
-                CSGO.handlePlayerModal(interaction, config.guild.roles.tenmans).catch();
+                await CSGO.handlePlayerModal(interaction, config.guild.roles.tenmans);
                 return;
             }
 
             if (name == "wallyball") {
-                CSGO.handleWallyballModal(interaction, null).catch();
+                await CSGO.handleWallyballModal(interaction, null);
                 return;
             }
 
             if (name == "purdue") {
-                CSGO.handlePurdueModal(user, interaction).catch();
+                await CSGO.handlePurdueModal(user, interaction);
                 return;
             }
 
         } catch (error) {
             CSGO.logger.error(`Modal by ${user.username} errored`, error);
-            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
-            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            if (interaction.replied) await interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true});
+            else await interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true});
         }
     }
 });
@@ -123,5 +135,11 @@ CSGO.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 Router.express.get(`/activate/:id`, (request, response) => {
     CSGO.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
         CSGO.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    CSGO.handleUnreachableEmail(request, response).catch(error =>
+        CSGO.logger.error("Error handling unreachable email", error)
     );
 });

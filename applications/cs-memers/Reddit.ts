@@ -28,34 +28,28 @@ export class Reddit {
             await application.client.channels.fetch(config.guild.channels.reddit) as TextBasedChannel
         ] as TextBasedChannel[];
 
-        const entries: Entry[] = [];
+        const entries = Object.entries(Reddit.data)
+            .map(([entryId, entryData]) => Entry.fromObject(entryData, entryId))
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
 
-        for (const entry in Reddit.data) {
-            const value = new Entry(Reddit.data[entry], entry);
-            entries.push(value);
-        }
+        const unseenEntry = entries.find(entry => !Reddit.parsedIds.includes(entry.id));
 
-        entries.sort((a, b) => a.date.getTime() - b.date.getTime());
+        if (!unseenEntry) return;
 
-        for (const entry of entries) {
-            if (Reddit.parsedIds.indexOf(entry.id) > -1) continue;
+        const embeds = [];
 
-            if (entry.images.length > 0) {
-                const embeds = [];
-                embeds.push(new RedditEmbed(entry.title, entry.link, entry.date, entry.score, entry.body, entry.images[0]))
-                for (let i = 1; i < 5 && i < entry.images.length; i++) {
-                    embeds.push(new RedditEmbed(null, entry.link, null, null, null, entry.images[i]))
-                }
-                await channels.forEach(channel => channel.send({embeds: embeds}));
-            } else {
-                const embed = new RedditEmbed(entry.title, entry.link, entry.date, entry.score, entry.body, null);
-                await channels.forEach(channel => channel.send({embeds: [embed]}));
+        if (unseenEntry.images.length > 0) {
+            embeds.push(new RedditEmbed(unseenEntry.title, unseenEntry.link, unseenEntry.date, unseenEntry.score, unseenEntry.body, unseenEntry.images[0]));
+
+            for (let i = 1; i < Math.min(5, unseenEntry.images.length); i++) {
+                embeds.push(new RedditEmbed(null, unseenEntry.link, null, null, null, unseenEntry.images[i]));
             }
-
-            Reddit.parsedIds.push(entry["id"]);
-            break;
+        } else {
+            embeds.push(new RedditEmbed(unseenEntry.title, unseenEntry.link, unseenEntry.date, unseenEntry.score, unseenEntry.body, null));
         }
 
+        channels.forEach(channel => channel.send({embeds: embeds}).catch());
+        Reddit.parsedIds.push(unseenEntry.id);
         Reddit.writeFile();
     }
 }
@@ -70,14 +64,19 @@ class Entry {
     public body: string;
     public images: string[];
 
-    public constructor(data: object, id: string) {
+    constructor(id: string, title: string, link: string, date: Date, score: number, body: string, images: string[]) {
         this.id = id;
-        this.title = data["title"];
-        this.link = data["link"].toString();
-        this.date = new Date(data["date"] * 1000);
-        this.score = data["score"];
-        this.body = data["body"];
-        this.images = data["previews"];
+        this.title = title;
+        this.link = link;
+        this.date = date;
+        this.score = score;
+        this.body = body;
+        this.images = images;
+    }
+
+    public static fromObject(data: any, id: string) {
+        const { title, link, date, score, body, previews } = data;
+        return new Entry(id, title, link.toString(), new Date(date * 1000), score, body, previews);
     }
 }
 

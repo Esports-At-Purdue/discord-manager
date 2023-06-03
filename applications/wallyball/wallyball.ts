@@ -2,8 +2,7 @@ import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
 import {
     Events,
-    Interaction,
-    TextBasedChannel
+    Interaction, TextChannel,
 } from "discord.js";
 import {WallyballApp} from "./WallyballApp";
 import {Database} from "../../Database";
@@ -15,7 +14,7 @@ const Wallyball = new WallyballApp();
 
 Wallyball.client.login(config.token).then(() => {
     Wallyball.load(config.token, config.guild.id, config.guild.channels.logs).then(async () => {
-        const channel = await Wallyball.guild.channels.fetch(config.guild.channels.queue) as TextBasedChannel;
+        const channel = await Wallyball.guild.channels.fetch(config.guild.channels.queue) as TextChannel;
         Wallyball.queue.load(channel).catch();
         Database.updateRankings(GameType.Wallyball, Wallyball).catch();
     });

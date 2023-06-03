@@ -1,5 +1,5 @@
 import {Application} from "../../Application";
-import {Queue} from "../../Queue";
+import {DraftFormat, Queue} from "../../Queue";
 import {GameType} from "../../Game";
 import {SetupCommand} from "./commands/setup";
 import {CommandRegister} from "../../CommandRegister";
@@ -11,11 +11,10 @@ const requiredFiles = [
 
 export class CSGOApp extends Application {
 
-    public queue: Queue;
 
     public constructor() {
         super("csgo", GameType.CSGO);
-        this.queue = new Queue(3600000, 10, true, GameType.CSGO, new Map());
+        this.queue = new Queue(3600000, 10, true, GameType.CSGO, DraftFormat.Auto, new Map());
         this.commands = new CommandRegister()
             .registerCommand(SetupCommand)
         this.ensureDataFilesExist(requiredFiles);

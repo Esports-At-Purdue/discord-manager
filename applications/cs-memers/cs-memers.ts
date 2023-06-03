@@ -15,6 +15,7 @@ import {Reaction} from "./Reaction";
 import {Reddit} from "./Reddit";
 import {Router} from "../../Router";
 import {Message} from "./Message";
+import {Request, Response} from "express";
 
 SourceMaps.install();
 
@@ -226,8 +227,14 @@ function reddit() {
     }, delay);
 }
 
-Router.express.get(`/activate/:id`, (request, response) => {
+Router.express.get(`/activate/:id`, (request: Request, response: Response) => {
     CSMemers.handleAutomaticRole(request, response, config.guild.roles.specialty.verified).catch(error =>
         CSMemers.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    CSMemers.handleUnreachableEmail(request, response).catch(error =>
+        CSMemers.logger.error("Error handling unreachable email", error)
     );
 });

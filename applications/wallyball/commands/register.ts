@@ -1,5 +1,5 @@
 import {ChatInputCommandInteraction, SlashCommandBuilder} from "discord.js";
-import {WallyballModal} from "../modals/Wallyball.Modal";
+import {WallyballModal} from "../../../modals/Wallyball.Modal";
 import {Command} from "../../../Command";
 import {Player} from "../../../Player";
 import {GameType} from "../../../Game";

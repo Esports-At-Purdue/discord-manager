@@ -62,8 +62,8 @@ export class Database {
             })
             .sort({
                 [`stats.${game}.elo`] : -1,
-                [`stats.${game}.wins`] : -1,
-                [`stats.${game}.points`] : -1
+                [`stats.${game}.wins`] : 1,
+                [`stats.${game}.points`] : 1
             })
             .map(
                 document => Player.fromObject(document)
@@ -85,7 +85,7 @@ export class Database {
         for (let i = 0; i < players.length; i++) {
             const player = Player.fromObject(players[i]);
             player.setRank(game, i + 1);
-            player.save().catch();
+            await player.save();
         }
 
         for (let i = 1; i <= pages; i++) {

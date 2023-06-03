@@ -1,6 +1,6 @@
 import {GlobalCommand} from "../Command";
 import {SlashCommandBuilder} from "discord.js";
-import {WallyballModal} from "../applications/wallyball/modals/Wallyball.Modal";
+import {WallyballModal} from "../modals/Wallyball.Modal";
 
 export const NameCommand = new GlobalCommand(
     new SlashCommandBuilder()

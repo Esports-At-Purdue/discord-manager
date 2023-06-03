@@ -1,12 +1,12 @@
 import * as SourceMaps from "source-map-support";
 import * as config from "./config.json";
 import {
-    CategoryChannel,
+    CategoryChannel, EmbedBuilder,
     Events,
     GuildMember,
     Interaction,
     Message,
-    TextBasedChannel,
+    TextChannel,
 } from "discord.js";
 import {PuggApp} from "./PuggApp";
 import {Student} from "../../Student";
@@ -156,13 +156,17 @@ Pugg.client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 });
 
 Pugg.client.on(Events.GuildMemberAdd, async (member: GuildMember) => {
-    const channel = await Pugg.guild.channels.fetch(config.guild.channels.join) as TextBasedChannel;
-    channel.send({content: `${member.nickname} has joined.`}).catch();
+    const channel = await Pugg.guild.channels.fetch(config.guild.channels.join) as TextChannel;
+    const embed = new EmbedBuilder().setTitle(`${member.user.username} has joined`).setColor("#2f3136");
+    await channel.send({content: `${member.user}`, embeds: [embed]});
+    const student = await Student.fetch(member.id);
+    if (student && student.verified) await member.roles.add(config.guild.roles.purdue);
 });
 
 Pugg.client.on(Events.GuildMemberRemove, async (member: GuildMember) => {
-    const channel = await Pugg.guild.channels.fetch(config.guild.channels.leave) as TextBasedChannel;
-    channel.send({content: `**${member.user.username}** has left.`}).catch();
+    const channel = await Pugg.guild.channels.fetch(config.guild.channels.leave) as TextChannel;
+    const embed = new EmbedBuilder().setTitle(`${member.user.username} has left`).setColor("#2f3136");
+    await channel.send({embeds: [embed]});
 });
 
 Pugg.client.on(Events.MessageCreate, (message: Message) => {
@@ -172,5 +176,11 @@ Pugg.client.on(Events.MessageCreate, (message: Message) => {
 Router.express.get(`/activate/:id`, (request, response) => {
     Pugg.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
         Pugg.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    Pugg.handleUnreachableEmail(request, response).catch(error =>
+        Pugg.logger.error("Error handling unreachable email", error)
     );
 });

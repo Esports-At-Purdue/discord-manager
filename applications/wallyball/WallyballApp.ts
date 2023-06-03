@@ -1,5 +1,5 @@
 import {Application} from "../../Application";
-import {Queue} from "../../Queue";
+import {DraftFormat, Queue} from "../../Queue";
 import {GameType} from "../../Game";
 import {ActivityType} from "discord.js";
 import {RegisterCommand} from "./commands/register";
@@ -11,11 +11,10 @@ const requiredFiles = [
 ];
 
 export class WallyballApp extends Application {
-    public queue: Queue;
 
     constructor() {
         super("wallyball", GameType.Wallyball);
-        this.queue = new Queue(86400000, -1, false, GameType.Wallyball, new Map());
+        this.queue = new Queue(86400000, -1, false, GameType.Wallyball, DraftFormat.Auto, new Map());
         this.commands = new CommandRegister()
             .registerCommand(RegisterCommand)
         this.ensureDataFilesExist(requiredFiles);

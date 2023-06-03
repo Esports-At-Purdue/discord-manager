@@ -46,7 +46,7 @@ export class Verifier {
         return emailRegex.test(email) && domainRegex.test(email);
     }
 
-    public static sendEmail(email: string, link: string): void {
+    public static sendEmail(email: string, link: string) {
 
         const transporter = mailer.createTransport({
             service: 'gmail',

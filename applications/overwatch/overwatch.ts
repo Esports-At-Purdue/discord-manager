@@ -92,6 +92,17 @@ Overwatch.client.on(Events.InteractionCreate, async (interaction: Interaction) =
         }
     }
 
+    if (interaction.isStringSelectMenu()) {
+        try {
+            await Overwatch.handlePlayerPickMenu(interaction);
+            return;
+        } catch (error) {
+            Overwatch.logger.error(`Menu by ${user.username} errored`, error);
+            if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+            else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+        }
+    }
+
     if (interaction.isModalSubmit()) {
         const name = interaction.customId;
 
@@ -144,6 +155,12 @@ Overwatch.client.on(Events.GuildAuditLogEntryCreate, async entry => {
 Router.express.get(`/activate/:id`, (request, response) => {
     Overwatch.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
         Overwatch.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    Overwatch.handleUnreachableEmail(request, response).catch(error =>
+        Overwatch.logger.error("Error handling unreachable email", error)
     );
 });
 

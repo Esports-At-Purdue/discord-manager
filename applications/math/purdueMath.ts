@@ -5,6 +5,7 @@ import {MathApp} from "./MathApp";
 import {Student} from "../../Student";
 import {PurdueModal} from "../../modals/Purdue.Modal";
 import {Verifier} from "../../Verifier";
+import {Router} from "../../Router";
 
 SourceMaps.install();
 
@@ -107,3 +108,15 @@ function hasMajorRole(member: GuildMember): boolean {
     const majorRoles = Object.values(config.guild.roles.majors);
     return member.roles.cache.some(role => majorRoles.includes(role.id));
 }
+
+Router.express.get(`/activate/:id`, (request, response) => {
+    PurdueMath.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
+        PurdueMath.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    PurdueMath.handleUnreachableEmail(request, response).catch(error =>
+        PurdueMath.logger.error("Error handling unreachable email", error)
+    );
+});

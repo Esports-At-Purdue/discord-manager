@@ -70,31 +70,40 @@ Valorant.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
             }
 
             if (role.id == config.guild.roles.tenmans) {
-                Valorant.handlePlayerButton(interaction, player).catch();
-                // No Return
+                if (await Valorant.handlePlayerButton(interaction, player)) return;
             }
 
             if (role.id == config.guild.roles.wallyball) {
-                Valorant.handleWallyballButton(interaction, player).catch();
-                // No Return
+                if (await Valorant.handleWallyballButton(interaction, player)) return;
             }
 
+            await interaction.deferUpdate();
             if (member.roles.cache.has(role.id)) {
                 member.roles.remove(role.id).catch();
-                const reply = removeRankedRoles(role.id);
-                await interaction.reply({content: `You removed **<@&${role.id}>**.`, ephemeral: true});
-                if (reply) interaction.followUp({content: reply, ephemeral: true}).catch();
+                const customMessage = getRoleRemovedMessage(role.id)
+                interaction.followUp({content: `You removed **<@&${role.id}>**.`, ephemeral: true}).catch();
+                if (customMessage) interaction.followUp({content: customMessage, ephemeral: true}).catch();
                 return;
             } else {
                 member.roles.add(role.id).catch();
-                const reply = applyRankedRoles(role.id);
-                await interaction.reply({content: `You applied **<@&${role.id}>**.`, ephemeral: true});
-                if (reply) interaction.followUp({content: reply, ephemeral: true}).catch();
+                const customMessage = getRoleAddedMessage(role.id)
+                interaction.followUp({content: `You applied **<@&${role.id}>**.`, ephemeral: true});
+                if (customMessage) interaction.followUp({content: customMessage, ephemeral: true}).catch();
                 return;
             }
 
         } catch (error) {
             Valorant.logger.error(`Button by ${user.username} errored`, error);
+            interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
+        }
+    }
+
+    if (interaction.isStringSelectMenu()) {
+        try {
+            await Valorant.handlePlayerPickMenu(interaction);
+            return;
+        } catch (error) {
+            Valorant.logger.error(`Menu by ${user.username} errored`, error);
             if (interaction.replied) interaction.followUp({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
             else interaction.reply({content: `Sorry, that didn't work.`, ephemeral: true}).catch();
         }
@@ -128,7 +137,7 @@ Valorant.client.on(Events.InteractionCreate, async (interaction: Interaction) =>
     }
 });
 
-function applyRankedRoles(roleId: string) {
+function getRoleAddedMessage(roleId: string) {
     switch (roleId) {
         case config.guild.roles.ranks.radiant: return config.guild.roles.ranks.onMessages.radiant;
         case config.guild.roles.ranks.immortal: return config.guild.roles.ranks.onMessages.immortal;
@@ -139,11 +148,11 @@ function applyRankedRoles(roleId: string) {
         case config.guild.roles.ranks.silver: return config.guild.roles.ranks.onMessages.silver;
         case config.guild.roles.ranks.bronze: return config.guild.roles.ranks.onMessages.bronze;
         case config.guild.roles.ranks.iron: return config.guild.roles.ranks.onMessages.iron;
+        default: return null;
     }
-    return undefined;
 }
 
-function removeRankedRoles(roleId: string) {
+function getRoleRemovedMessage(roleId: string) {
     switch (roleId) {
         case config.guild.roles.ranks.radiant: return config.guild.roles.ranks.offMessages.radiant;
         case config.guild.roles.ranks.immortal: return config.guild.roles.ranks.offMessages.immortal;
@@ -154,12 +163,18 @@ function removeRankedRoles(roleId: string) {
         case config.guild.roles.ranks.silver: return config.guild.roles.ranks.offMessages.silver;
         case config.guild.roles.ranks.bronze: return config.guild.roles.ranks.offMessages.bronze;
         case config.guild.roles.ranks.iron: return config.guild.roles.ranks.offMessages.iron;
+        default: return null;
     }
-    return undefined;
 }
 
 Router.express.get(`/activate/:id`, (request, response) => {
     Valorant.handleAutomaticRole(request, response, config.guild.roles.purdue).catch(error =>
         Valorant.logger.error("Error Applying Automatic Role", error)
+    );
+});
+
+Router.express.get(`/invalid/:id`, (request: Request, response: Response) => {
+    Valorant.handleUnreachableEmail(request, response).catch(error =>
+        Valorant.logger.error("Error handling unreachable email", error)
     );
 });

@@ -1,4 +1,11 @@
-import {ButtonInteraction, CategoryChannel, ChannelType, PermissionsBitField} from "discord.js";
+import {
+    ActionRowBuilder, ButtonBuilder,
+    ButtonInteraction, ButtonStyle,
+    CategoryChannel,
+    ChannelType,
+    EmbedBuilder,
+    PermissionsBitField
+} from "discord.js";
 import {Filter, UpdateFilter, UpdateOptions} from "mongodb";
 import {Database} from "./Database";
 import {Saveable} from "./Saveable";
@@ -57,6 +64,15 @@ export class Ticket implements Saveable {
                 }
             ]
         });
+
+        const embed = new EmbedBuilder()
+            .setTitle(`${reason} Ticket`)
+            .setDescription("Please let us know any details relevant to your situation.");
+        const row = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(new ButtonBuilder().setCustomId("close").setLabel("Close Ticket").setStyle(ButtonStyle.Danger));
+
+        await ticketChannel.send({embeds: [embed], components: [row]});
+
         return new Ticket(ticketChannel.id, student.id, reason, [], TicketStatus.Open);
     }
 

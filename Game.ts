@@ -3,8 +3,9 @@ import {Saveable} from "./Saveable";
 import {Database} from "./Database";
 import {Player} from "./Player";
 import {Team} from "./Team";
-import {Queue} from "./Queue";
-import {CategoryChannel, ChannelType} from "discord.js";
+import {AttachmentBuilder, CategoryChannel, ChannelType, Guild, TextChannel} from "discord.js";
+import {GameEmbed} from "./embeds/Game.Embed";
+import {GameRow} from "./components/Game.Row";
 
 export class Game implements Saveable {
     public id: string;
@@ -12,7 +13,7 @@ export class Game implements Saveable {
     public teamOne: string;
     public teamTwo: string;
     public players: string[];
-    public game: GameType;
+    public type: GameType;
     public outcome: GameOutcome;
     public map: GameMap;
 
@@ -22,7 +23,7 @@ export class Game implements Saveable {
         this.teamOne = teamOne;
         this.teamTwo = teamTwo;
         this.players = players;
-        this.game = game;
+        this.type = game;
         this.outcome = outcome;
         this.map = map;
     }
@@ -62,6 +63,42 @@ export class Game implements Saveable {
         });
     }
 
+    public async start(channel: TextChannel) {
+        const mentions = await this.mentions();
+        const teamOne = await this.getTeamOne();
+        const teamTwo = await this.getTeamTwo();
+
+        const gameEmbed = await GameEmbed.build(this, teamOne, teamTwo);
+        const mapFilePath = Game.getMapFilePath(this.map, this.type);
+        const attachment = new AttachmentBuilder(mapFilePath, { name: "map.jpg" });
+        const teamOneVoice = await channel.parent.children.create({ name: `${teamOne.getName()}`, type: ChannelType.GuildVoice});
+        const teamTwoVoice = await channel.parent.children.create({ name: `${teamTwo.getName()}`, type: ChannelType.GuildVoice});
+
+        for (const id of teamOne.players) {
+            const member = await channel.guild.members.fetch(id);
+            try { await member.voice.setChannel(teamOneVoice) } catch {}
+        }
+
+        for (const id of teamTwo.players) {
+            const member = await channel.guild.members.fetch(id);
+            try { await member.voice.setChannel(teamTwoVoice) } catch {}
+        }
+
+        teamOne.channel = teamOneVoice.id;
+        teamTwo.channel = teamTwoVoice.id;
+        await teamOne.save();
+        await teamTwo.save();
+
+        await channel.send({content: mentions, embeds: [gameEmbed], files: [attachment]});
+    }
+
+    public async end(guild: Guild, teamOneScore: number, teamTwoScore: number, result: GameOutcome) {
+        const teamOne = await Team.fetch(this.teamOne);
+        const teamTwo = await Team.fetch(this.teamTwo);
+
+
+    }
+
     public async save() {
         const query: Filter<any> = {id: this.id};
         const update: UpdateFilter<any> = {$set: this};
@@ -77,21 +114,11 @@ export class Game implements Saveable {
         return Game.fromObject(document);
     }
 
-    public static async startQueueBasedGame(queue: Queue, category: CategoryChannel): Promise<Game> {
-        const playerIds = [];
-        const unsortedPlayers = await queue.getPlayers();
-        const sortedPlayers = unsortedPlayers.sort((a, b) => b.getElo(queue.game) - a.getElo(queue.game));
-        for (const player of sortedPlayers) playerIds.push(player.id);
-
-        const id = String(await Database.games.countDocuments() + 1);
-        const channel = await category.children.create({name: `game-${id}`, type: ChannelType.GuildText});
-        const totalTeams = await Database.teams.countDocuments();
-        const teamOne = await new Team(String(totalTeams + 1), null, [playerIds[0]], 0, 0, 0).save();
-        const teamTwo = await new Team(String(totalTeams + 2), null, [playerIds[1]], 0, 0, 0).save();
-        const maps = Game.getMaps(queue.game);
-        const map = maps[Math.floor(Math.random() * maps.length)];
-
-        return new Game(id, channel.id, teamOne.id, teamTwo.id, playerIds, queue.game, GameOutcome.InProgress, map).save();
+    public static async fetchByChannel(channelId: string): Promise<Game> {
+        const query = { channel: channelId };
+        const document = await Database.games.findOne(query);
+        if (!document) return null;
+        return Game.fromObject(document);
     }
 
     public static getMaps(game: GameType): GameMap[] {
@@ -185,12 +212,15 @@ export class Game implements Saveable {
         }
     }
 
-    public static getMapFileName(map: GameMap): string {
+    public static getMapFilePath(map: GameMap, game: GameType): string {
+
+        const path = `../../media/${game}/maps/`;
+
         // Remove apostrophes and colons
         const removedApostrophes = map.replace(/[':]/g, '');
 
         // Convert to lowercase and replace spaces with dashes
-        return removedApostrophes.toLowerCase().replace(/\s/g, '-');
+        return path.concat(removedApostrophes.toLowerCase().replace(/\s/g, '-')).concat(".jpg");
     }
 }
 
@@ -277,4 +307,42 @@ export enum GameMap {
     Colosseo = "Colosseo",
     Esperanca = "Esperanca",
     NewQueenStreet = "New Queen Street"
+}
+
+export enum GameRank {
+    Copper1 = "copper-1",
+    Copper2 = "copper-2",
+    Copper3 = "copper-3",
+    Copper4 = "copper-4",
+    Copper5 = "copper-5",
+    Bronze1 = "bronze-1",
+    Bronze2 = "bronze-2",
+    Bronze3 = "bronze-3",
+    Bronze4 = "bronze-4",
+    Bronze5 = "bronze-5",
+    Silver1 = "silver-1",
+    Silver2 = "silver-2",
+    Silver3 = "silver-3",
+    Silver4 = "silver-4",
+    Silver5 = "silver-5",
+    Gold1 = "gold-1",
+    Gold2 = "gold-2",
+    Gold3 = "gold-3",
+    Gold4 = "gold-4",
+    Gold5 = "gold-5",
+    Platinum1 = "platinum-1",
+    Platinum2 = "platinum-2",
+    Platinum3 = "platinum-3",
+    Platinum4 = "platinum-4",
+    Platinum5 = "platinum-5",
+    Diamond1 = "diamond-1",
+    Diamond2 = "diamond-2",
+    Diamond3 = "diamond-3",
+    Diamond4 = "diamond-4",
+    Diamond5 = "diamond-5",
+    Emerald1 = "emerald-1",
+    Emerald2 = "emerald-2",
+    Emerald3 = "emerald-3",
+    Emerald4 = "emerald-4",
+    Emerald5 = "emerald-5",
 }
